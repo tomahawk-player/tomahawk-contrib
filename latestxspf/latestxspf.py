@@ -15,7 +15,7 @@
 # created: 2011/03/30
 #
 
-import commands, tagpy, xspfgenerator, urllib
+import commands, tagpy, xspfgenerator, urllib, time
 
 findstring = 'find %s -mtime -%i -and \( -iname "*.mp3" -or -iname "*.ogg" -or -iname "*.flac" \)'
 
@@ -48,8 +48,10 @@ def latesttracks(directory, days):
 	Finds the latest additions to 'directory' (within the last 'days')
 	and returns an XSPF playlist.
 	"""
+	then = time.time() - (days * 24 * 3600)
+	date = time.strftime("%m/%d, %Y", time.localtime(then))
 	creator = "LatestXSPF"
-	title = "Tracks added in the past %i days" % days
+	title = "New tracks since " + date
 	files  = findfiles(directory, days)
 	tracks = [tag2dict(f) for f in files]
 	

@@ -16,7 +16,7 @@
 import time
 
 
-class SimpleXSPFGenerator(Document):
+class SimpleXSPFGenerator(object):
 	
 	def __init__(self, title, creator, *args, **kwargs):
 		
