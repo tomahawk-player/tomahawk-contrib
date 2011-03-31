@@ -1,0 +1,3 @@
+latestxspf is a simple script which generates an XSPF playlist containing
+the latest additions to your local music collections.
+It depends on TagPy <http://pypi.python.org/pypi/tagpy>.
