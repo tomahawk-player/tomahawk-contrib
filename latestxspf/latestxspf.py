@@ -30,7 +30,7 @@ def findfiles(directory, mtime):
 
 def tag2dict(filename):
 	"""
-	Reads tag info from 'filename' and returns a directory with artist, title 
+	Reads tag info from 'filename' and returns a dictionary with artist, title 
 	and album strings.
 	"""
 	tag = tagpy.FileRef(filename).tag()
