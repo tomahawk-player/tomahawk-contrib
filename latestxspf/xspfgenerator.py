@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 #
 # A class to construct simple XSPF playlists.
 #
@@ -13,24 +14,39 @@
 #
 
 from xml.dom.minidom import Document
+import time
 
 
 class SimpleXSPFGenerator(Document):
 	
-	def __init__(self, *args, **kwargs):
+	def __init__(self, title, creator, *args, **kwargs):
 		Document.__init__(self, *args, **kwargs)
+		
+		stamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
 		
 		playlist = self.createElement("playlist")
 		playlist.setAttribute("version", "1")
 		playlist.setAttribute("xmlns", "http://xspf.org/ns/0/")
 		self.appendChild(playlist)
 		
+		date = self.createElement("date")
+		date.appendChild(self.createTextNode(stamp))
+		playlist.appendChild(date)
+		
+		titletag = self.createElement("title")
+		titletag.appendChild(self.createTextNode(title))
+		playlist.appendChild(titletag)
+		
+		creatortag = self.createElement("creator")
+		creatortag.appendChild(self.createTextNode(creator))
+		playlist.appendChild(creatortag)
+				
 		tracklist = self.createElement("tracklist")
 		playlist.appendChild(tracklist)
 		
 		self._playlist = playlist
 		self._tracklist = tracklist
-			
+	
 		
 	def addTrack(self, **kwargs):
 		"""
@@ -57,12 +73,13 @@ class SimpleXSPFGenerator(Document):
 		'tracks' is a list of dicts, see addTrack().
 		"""
 		for track in tracks:
-			self.addTrack(track)
+			self.addTrack(**track)
 	
+	
+	def __unicode__(self):
+		return unicode(self.toprettyxml(indent='', encoding='utf-8'), 'utf-8')
 	
 	def __str__(self):
-		return self.toprettyxml(indent=' ')
+		return unicode(self).encode('utf-8')
 	
 	
-	
-		
