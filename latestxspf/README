@@ -1,3 +1,7 @@
 latestxspf is a simple script which generates an XSPF playlist containing
-the latest additions to your local music collections.
-It depends on TagPy <http://pypi.python.org/pypi/tagpy>.
+the latest additions to your local music collection.
+
+It was just a quick idea and in quite an alpha state right now. And it may
+not be needed anymore when Tomahawk someday implements something similar.
+
+latestxspf depends on TagPy <http://pypi.python.org/pypi/tagpy>.
