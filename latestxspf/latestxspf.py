@@ -50,8 +50,9 @@ def latesttracks(directory, days):
 	"""
 	then = time.time() - (days * 24 * 3600)
 	date = time.strftime("%m/%d, %Y", time.localtime(then))
+	now  = time.strftime("%m/%d, %Y")
 	creator = "LatestXSPF"
-	title = "New tracks since " + date
+	title = "New tracks from {date} till {now}".format(date=date, now=now)
 	files  = findfiles(directory, days)
 	tracks = [tag2dict(f) for f in files]
 	
