@@ -5,3 +5,5 @@ It was just a quick idea and it may not be needed anymore when Tomahawk someday
 implements something comparable (viewing the latest additions).
 
 latestxspf depends on TagPy <http://pypi.python.org/pypi/tagpy>.
+
+Usage: latestxspf.py DIRECTORY DAYS
