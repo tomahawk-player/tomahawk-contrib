@@ -15,51 +15,59 @@
 # created: 2011/03/30
 #
 
-import commands, tagpy, xspfgenerator, urllib, time
+import time
+import urllib
+import commands
+import tagpy
+import xspfgenerator
+from find import *
 
-findstring = 'find %s -mtime -%i -and \( -iname "*.mp3" -or -iname "*.ogg" -or -iname "*.flac" \)'
-
-
-def findfiles(directory, mtime):
+class TagReader(object):
 	"""
-	Finds audio files in 'directory' modified in the last 'mtime' days.
+	Reads tags from filenames and saves it to a list of dictionaries.
 	"""
-	listing = commands.getoutput(findstring % (directory, mtime))
-	return listing.split('\n')
-
-
-def tag2dict(filename):
-	"""
-	Reads tag info from 'filename' and returns a dictionary with artist, title 
-	and album strings.
-	"""
-	tag = tagpy.FileRef(filename).tag()
-	d = {}
-	d.update(location = 'file://'+urllib.quote(filename))
-	d.update(artist = tag.artist or "Unknown Artist")
-	d.update(title = tag.title or "Unknown Title")
-	d.update(album = tag.album or '')
+	def __init__(self):
+		self.__dicts = []
 	
-	return d
-
+	def read(self, filename):
+		"""
+		Reads tag info from 'filename' and saves a dictionary with artist, title 
+		and album strings.
+		"""
+		tag = tagpy.FileRef(filename).tag()
+		d = {}
+		d.update(location = 'file://'+urllib.quote(filename))
+		d.update(artist = tag.artist or "Unknown Artist")
+		d.update(title = tag.title or "Unknown Title")
+		d.update(album = tag.album or '')
+		
+		self.__dicts.append(d)
+	
+	def tags(self):
+		"""
+		Returns all tags read so far in a list of dicts
+		"""
+		return self.__dicts
+		
 
 def latesttracks(directory, days):
 	"""
 	Finds the latest additions to 'directory' (within the last 'days')
 	and returns an XSPF playlist.
 	"""
+	tags = TagReader()
 	then = time.time() - (days * 24 * 3600)
-	date = time.strftime("%m/%d, %Y", time.localtime(then))
-	now  = time.strftime("%m/%d, %Y")
+	date = time.strftime("%D", time.localtime(then))
+	now  = time.strftime("%D")
+	
 	creator = "LatestXSPF"
 	title = "New tracks from {date} till {now}".format(date=date, now=now)
-	files  = findfiles(directory, days)
-	tracks = [tag2dict(f) for f in files]
+	
+	find(days=days, dir=directory, exts=[".mp3", ".flac", ".ogg"], hook=tags.read)
 	
 	xspf = xspfgenerator.SimpleXSPFGenerator(title, creator)
-	xspf.addTracks(tracks)
+	xspf.addTracks(tags.tags())
 	return xspf
-
 
 
 if __name__ == "__main__":
