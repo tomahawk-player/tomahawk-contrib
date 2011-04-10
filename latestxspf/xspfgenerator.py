@@ -14,22 +14,25 @@
 #
 
 import time
+from xml.sax.saxutils import escape
 
 
 class SimpleXSPFGenerator(object):
 	
-	def __init__(self, title, creator, *args, **kwargs):
-		
+	def __init__(self, title, creator):
+		title   = escape(title)
+		creator = escape(creator)
 		stamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
 		
 		self.xml = u'<?xml version="1.0" encoding="UTF-8"?>\n'
 		self.xml += u'<playlist version="1" xmlns="http://xspf.org/ns/0/">\n'
-		self.xml += u' <creator>%s</creator>\n' % creator
-		self.xml += u' <date>%s</date>\n' % stamp
-		self.xml += u' <title>%s</title>\n' % title
+		self.xml += u' <creator>{creator}</creator>\n'
+		self.xml += u' <date>{date}</date>\n'
+		self.xml += u' <title>{title}</title>\n'
 		self.xml += u' <trackList>\n'
 		
-	
+		self.xml = self.xml.format(date=stamp, title=title, creator=creator)
+		
 	def addTrack(self, **kwargs):
 		"""
 		Adds a track to the list. 
@@ -42,10 +45,11 @@ class SimpleXSPFGenerator(object):
 		for k, v in kwargs.items():
 			if k == "artist":
 				k = "creator"
+			if k != "location":
+				v = escape(v)
 			self.xml += u'   <{k}>{v}</{k}>\n'.format(k=k, v=v)
 			
 		self.xml += u'  </track>\n'
-	
 	
 	def addTracks(self, tracks):
 		"""
@@ -53,8 +57,7 @@ class SimpleXSPFGenerator(object):
 		'tracks' is a list of dicts, see addTrack().
 		"""
 		for track in tracks:
-			self.addTrack(**track)
-	
+			self.addTrack(**track)	
 	
 	def __unicode__(self):
 		xml = self.xml + u' </tracklist>\n</playlist>'
