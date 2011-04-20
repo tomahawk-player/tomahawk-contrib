@@ -49,7 +49,6 @@ class TagReader(object):
 		"""
 		return self.__dicts
 		
-
 def latesttracks(directory, days):
 	"""
 	Finds the latest additions to 'directory' (within the last 'days')
@@ -72,11 +71,12 @@ def latesttracks(directory, days):
 
 if __name__ == "__main__":
 	import sys
-	argv, argc = sys.argv, len(sys.argv)
-	if argc < 3:
-		print "Usage: %s DIRECTORY DAYS" % argv[0]
-	elif not argv[2].isdigit():
-		print "DAYS should be a number"
-		sys.exit(1)
-	else:
-		print latesttracks(argv[1], int(argv[2]))
+	import argparse
+
+	parser = argparse.ArgumentParser(description='Create playlist of latest additions.')
+	parser.add_argument('directory', help='directory to look for music (./)', nargs='?', default='./')
+	parser.add_argument('days', help='define "new": how many days to look into the past (14)', nargs='?', type=int, default=14)
+	parser.add_argument('outfile', help='optional output file name (stdout)', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+	args = parser.parse_args()
+
+	print << args.outfile, latesttracks(args.directory, args.days)
