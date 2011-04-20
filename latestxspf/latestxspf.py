@@ -79,4 +79,4 @@ if __name__ == "__main__":
 	parser.add_argument('outfile', help='optional output file name (stdout)', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
 	args = parser.parse_args()
 
-	print << args.outfile, latesttracks(args.directory, args.days)
+	print >> args.outfile, latesttracks(args.directory, args.days)
