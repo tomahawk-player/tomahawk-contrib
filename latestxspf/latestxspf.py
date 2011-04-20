@@ -15,9 +15,9 @@
 # created: 2011/03/30
 #
 
+import sys
 import time
 import urllib
-import commands
 import tagpy
 import xspfgenerator
 from find import *
@@ -48,7 +48,11 @@ class TagReader(object):
 		Returns all tags read so far in a list of dicts
 		"""
 		return self.__dicts
+
+	def __len__(self):
+		return len(self.__dicts)
 		
+
 def latesttracks(directory, days):
 	"""
 	Finds the latest additions to 'directory' (within the last 'days')
@@ -64,6 +68,10 @@ def latesttracks(directory, days):
 	
 	find(days=days, dir=directory, exts=[".mp3", ".flac", ".ogg"], hook=tags.read)
 	
+	if len(tags) == 0:
+		print >> sys.stderr, 'No music files found.'
+		return ''
+	
 	xspf = xspfgenerator.SimpleXSPFGenerator(title, creator)
 	xspf.addTracks(tags.tags())
 	return xspf
@@ -75,8 +83,8 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Create playlist of latest additions.')
 	parser.add_argument('directory', help='directory to look for music (./)', nargs='?', default='./')
-	parser.add_argument('days', help='define "new": how many days to look into the past (14)', nargs='?', type=int, default=14)
-	parser.add_argument('outfile', help='optional output file name (stdout)', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+	parser.add_argument('-d', metavar='DAYS', help='define "new": how many days to look into the past (14)', type=int, default=14)
+	parser.add_argument('-o', metavar='FILE', help='optional output file name (stdout)', type=argparse.FileType('w'), default=sys.stdout)
 	args = parser.parse_args()
 
 	print >> args.outfile, latesttracks(args.directory, args.days)
