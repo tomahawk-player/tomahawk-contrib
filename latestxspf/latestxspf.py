@@ -68,9 +68,7 @@ def latesttracks(directory, days):
 	
 	find(days=days, dir=directory, exts=[".mp3", ".flac", ".ogg"], hook=tags.read)
 	
-	if len(tags) == 0:
-		print >> sys.stderr, 'No music files found.'
-		return ''
+	print >> sys.stderr, len(tags), 'music files found'
 	
 	xspf = xspfgenerator.SimpleXSPFGenerator(title, creator)
 	xspf.addTracks(tags.tags())
@@ -83,8 +81,8 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Create playlist of latest additions.')
 	parser.add_argument('directory', help='directory to look for music (./)', nargs='?', default='./')
-	parser.add_argument('-d', metavar='DAYS', help='define "new": how many days to look into the past (14)', type=int, default=14)
-	parser.add_argument('-o', metavar='FILE', help='optional output file name (stdout)', type=argparse.FileType('w'), default=sys.stdout)
+	parser.add_argument('-d', dest='days', metavar='DAYS', help='define "new": how many days to look into the past (14)', type=int, default=14)
+	parser.add_argument('-o', dest='outfile', metavar='FILE', help='optional output file name (stdout)', type=argparse.FileType('w'), default=sys.stdout)
 	args = parser.parse_args()
 
 	print >> args.outfile, latesttracks(args.directory, args.days)
