@@ -78,11 +78,23 @@ def latesttracks(directory, days):
 if __name__ == "__main__":
 	import sys
 	import argparse
+	from datetime import datetime
 
 	parser = argparse.ArgumentParser(description='Create playlist of latest additions.')
 	parser.add_argument('directory', help='directory to look for music (./)', nargs='?', default='./')
-	parser.add_argument('-d', dest='days', metavar='DAYS', help='define "new": how many days to look into the past (14)', type=int, default=14)
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument('-d', '--days', metavar='DAYS', help='find new music from the last DAYS (14)', type=int, default=14)
+	group.add_argument('--since', metavar='M/D/YY', help='find new music since this date')
 	parser.add_argument('-o', dest='outfile', metavar='FILE', help='optional output file name (stdout)', type=argparse.FileType('w'), default=sys.stdout)
 	args = parser.parse_args()
+
+	if args.since is not None:
+		now = datetime.now()
+		try:
+			since = datetime.strptime(args.since, '%m/%d/%y')
+		except ValueError:
+			print >> sys.stderr, 'date must be in M/D/YY format'
+			sys.exit()
+		args.days = (now-since).days
 
 	print >> args.outfile, latesttracks(args.directory, args.days)
