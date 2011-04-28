@@ -83,8 +83,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Create playlist of latest additions.')
 	parser.add_argument('directory', help='directory to look for music (./)', nargs='?', default='./')
 	group = parser.add_mutually_exclusive_group()
-	group.add_argument('-d', '--days', metavar='DAYS', help='find new music from the last DAYS (14)', type=int, default=14)
-	group.add_argument('--since', metavar='M/D/YY', help='find new music since this date')
+	group.add_argument('-d', metavar='DAYS', help='find new music from the last DAYS (14)', type=int, default=14)
+	group.add_argument('-s', metavar='M/D/YY', help='find new music since this date')
 	parser.add_argument('-o', dest='outfile', metavar='FILE', help='optional output file name (stdout)', type=argparse.FileType('w'), default=sys.stdout)
 	args = parser.parse_args()
 
@@ -96,5 +96,6 @@ if __name__ == "__main__":
 			print >> sys.stderr, 'date must be in M/D/YY format'
 			sys.exit()
 		args.days = (now-since).days
+		print >> sys.stderr, args.days, 'days'
 
 	print >> args.outfile, latesttracks(args.directory, args.days)
