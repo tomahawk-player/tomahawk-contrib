@@ -24,6 +24,7 @@ from feedcache import cache
 
 MAX_THREADS=5
 OUTPUT_DIR='/tmp/charts/feedcache'
+TTL=3600
 
 
 def start_job(urls=[], max_threads=MAX_THREADS):
@@ -86,7 +87,7 @@ def start_job(urls=[], max_threads=MAX_THREADS):
 def fetch_urls(storage, input_queue, output_queue):
     """Thread target for fetching feed data.
     """
-    c = cache.Cache(storage)
+    c = cache.Cache(storage, TTL)
 
     while True:
         next_url = input_queue.get()
