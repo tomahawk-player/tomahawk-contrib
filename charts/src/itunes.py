@@ -4,9 +4,16 @@ import json
 import urllib2
 import string
 
+from cache import cache
+
+
+COUNTRY_EXPIRE = 86400 # i day
+FEED_LIST_EXPIRE = 86400
+
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
+@cache.cache('get_countries', expire=COUNTRY_EXPIRE)
 def get_countries():
     doc = lxml.html.parse(generator_url)
 
@@ -15,6 +22,7 @@ def get_countries():
     return countries
 
 
+@cache.cache('get_music_feeds', expire=FEED_LIST_EXPIRE)
 def get_music_feeds(countries):
     # { name: country, charts: [], genres: [] }
     music_data = []
