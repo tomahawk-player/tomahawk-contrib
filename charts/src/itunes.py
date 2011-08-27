@@ -1,10 +1,12 @@
-
+#!/usr/bin/env python
 import lxml.html
 import json
 import urllib2
 import string
 
+#local includes
 from cache import cache
+import feed_fetcher
 
 
 COUNTRY_EXPIRE = 86400 # i day
@@ -86,8 +88,19 @@ def get_feed_urls(limit):
 
 
 
-def main()
-    return
+#######################################################################
+# Fetch Feeds
+#
+# Use the feed urls constructed previously and fetch them using our
+# fancy feed fetcher.
+
+
+def fetch(urls):
+    feed_fetcher.start_job(urls[0:2])
+
+
+def main():
+    fetch(get_feed_urls(10))
 
 if __name__ == '__main__':
     main()
