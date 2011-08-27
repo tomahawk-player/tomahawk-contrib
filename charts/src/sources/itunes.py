@@ -5,8 +5,9 @@ import urllib2
 import string
 
 #local includes
-from cache import cache
-import feed_fetcher
+import utils
+from utils.cache import cache
+from utils import feed_fetcher
 
 
 COUNTRY_EXPIRE = 86400 # i day
