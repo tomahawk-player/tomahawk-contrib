@@ -13,6 +13,13 @@ FEED_LIST_EXPIRE = 86400
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
+
+#######################################################################
+# Fetch and Construct Feed List
+#
+# This section parses the iTunes generator page and constructs a list of
+# every possible data feed for Music
+
 @cache.cache('get_countries', expire=COUNTRY_EXPIRE)
 def get_countries():
     doc = lxml.html.parse(generator_url)
@@ -73,11 +80,14 @@ def construct_feeds(music_feeds, limit):
                 feeds.append(url)
     return feeds
 
+def get_feed_urls(limit):
+    feeds = construct_feeds(get_music_feeds(get_countries()), limit)
+    return feeds
 
-def main():
-    feeds = construct_feeds(get_music_feeds(get_countries()), 100)
-    for f in feeds:
-        print f
+
+
+def main()
+    return
 
 if __name__ == '__main__':
     main()

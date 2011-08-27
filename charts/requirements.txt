@@ -1,4 +1,6 @@
 flask
 jinja2
+shove
+feedparser
 feedcache
 beaker
