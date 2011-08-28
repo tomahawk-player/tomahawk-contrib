@@ -1,2 +1,3 @@
 http://en.wikipedia.org/wiki/UK_Singles_Chart
 http://itunes.apple.com/rss/generator/
+http://www.billboard.com/charts/chart-detail.json?chartType=Singles&title=Last+Friday+Night+(T.G.I.F.)&artist=Katy+Perry&chartDate=2011-09-03&formatId=379
