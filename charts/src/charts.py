@@ -15,21 +15,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#
+# local includes
+#
+from sources import itunes
 
 # flask includes
 from flask import Flask, request, session, g, \
                   redirect, url_for, abort, render_template, \
                   flash, make_response
 
+#
+#system
+import urllib
+
+DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 
 ## Routes and Handlers ##
 
+itunes_source = itunes.iTunesSource()
+
 @app.route('/')
 def welcome():
-    return "Hello World :)";
+    feeds = itunes_source.chart_list()
+    resp = ''
+    for f in feeds:
+       resp += '<a href="/feed/%s">%s</a><br />\n' % (urllib.quote_plus(f), f)
+    return resp
+
+@app.route('/feed/<path:url>')
+def get_chart(url):
+    print url
+    real_url = urllib.unquote_plus(url)
+    data = str(itunes_source.get_chart(real_url))
+    resp = make_response(data)
+    resp.headers['Content-type'] = 'application/json'
+    return resp
 
 if __name__ == '__main__':
     app.run(port=8080)
