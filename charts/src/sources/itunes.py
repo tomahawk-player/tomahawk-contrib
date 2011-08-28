@@ -20,6 +20,7 @@ import json
 import urllib2
 import string
 import re
+import hashlib
 
 #local includes
 from utils import cache
@@ -112,7 +113,10 @@ def get_feed_urls(limit):
 # Use the feed urls constructed previously and fetch them using our
 # fancy feed fetcher.
 
-def wrap_data(name, source, list, type, geo, genre):
+def wrap_metadata(name, source, type, geo, genre, id, origin, size):
+    return locals()
+
+def wrap_chart(name, source, list, type, geo, genre, id, origin):
     return locals()
 
 def wrap_entry(rank, track, artist, album):
@@ -160,11 +164,17 @@ def itunes_process(resp, content):
     r =  genre_re.search(id)
     if r != None:
         genre = r.groups()[0]
-    chart  = wrap_data(title, 'iTunes', list, type, geo, genre)
+
+    origin = id
+    md5 = hashlib.md5()
+    md5.update(id)
+    id = md5.hexdigest()
+    chart  = wrap_chart(title, 'itunes', list, type, geo, genre, id, origin)
+    metadata = wrap_metadata(title, 'itunes', type, geo, genre, id, origin, len(list))
 
     cache.itunesstorage[id] = chart
-    list = cache.itunesstorage.get('itunes', [])
-    list.append(id)
+    list = cache.itunesstorage.get('itunes', {})
+    list[id] = metadata
     cache.itunesstorage['itunes'] = list
 
 def fetch(urls):
@@ -173,7 +183,7 @@ def fetch(urls):
 def test():
     fetch( get_feed_urls(10)[0:10] )
     list  = cache.itunesstorage.get('itunes')
-    for id in list:
+    for id in list.keys():
         chart = cache.itunesstorage[id]
         print chart
 
