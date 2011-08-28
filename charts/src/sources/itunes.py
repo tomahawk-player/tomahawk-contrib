@@ -128,21 +128,55 @@ def wrap_entry(rank, track, artist, album):
     #return {'rank': rank, 'track': track, 'artist': artist, 'album': album}
     return locals()
 
-def itunes_process(resp, content):
+def itunes_process(resp, content, url):
     if resp.fromcache:
         # don't update
         print "got cache hit"
     if resp.status != 200:
         print "Error itunes response: " % (resp.status)
         return
-    list = []
 
-    feed = etree.fromstring(content)
+    print "itunes parsing %s" %(url)
+
+    try:
+        feed = etree.fromstring(content)
+    except XMLSyntaxError:
+        return "Parse error, skipping"
+
+    if feed.tag == '{http://www.w3.org/2005/Atom}feed':
+        return process_atom(feed)
+    elif feed.tag == 'rss':
+        #return process_rss(feed)
+        return # TODO finish rss parsing
+
+def process_rss(feed):
+    list = []
+    ns = {'atom': 'http://www.w3.org/2005/Atom',
+          'itms': 'http://phobos.apple.com/rss/1.0/modules/itms/'
+         }
+    id = feed.xpath('//atom:link[@rel="self"]', namespaces=ns)[0].attrib['href']
+    type = 'Album'
+
+    items = feed.xpath('channel/item')
+    i = 1
+    for item in items:
+        album = item.xpath('itms:album', namespaces=ns)[0].text
+        artist = item.xpath('itms:artist', namespaces=ns)[0].text
+        rank = i
+        i += 1
+        list.append(wrap_entry(rank, '', artist, album))
+    title = feed.xpath('channel/title')[0].text
+    # TODO finish this
+
+def process_atom(feed):
+    list = []
     ns = {'ns': 'http://www.w3.org/2005/Atom',
           'im': 'http://itunes.apple.com/rss'}
 
     id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
     type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
+    if type != "Album" or type != "Track":
+        return #skip playlists
     i = 1
     entries = feed.xpath('/ns:feed/ns:entry', namespaces=ns)
     for entry in entries:
@@ -185,6 +219,7 @@ def itunes_process(resp, content):
     list = cache.itunesstorage.get('itunes', {})
     list[id] = metadata
     cache.itunesstorage['itunes'] = list
+    print "Got %s" % (title)
 
 def fetch(urls):
     url_fetcher.start_job(urls, itunes_process)
@@ -209,7 +244,7 @@ class iTunesSource(Source):
 
 
 def main():
-    fetch(get_feed_urls(10))
+    fetch(get_feed_urls(100))
 
 if __name__ == '__main__':
     main()
