@@ -12,32 +12,39 @@ class BillboardSpider(CrawlSpider):
     name = "billboard.com"
     allowed_domains = ["billboard.com"]
     start_urls = [
-        #"http://www.billboard.com/charts/hot-100"
+        # this is the list of all the charts
         "http://www.billboard.com/charts"
     ]
 
+    # xpath to retrieve the urls to specific charts
     chart_xpath = '//div[@class="units"]/ul/li/div[@class="chart"]/h2/a'
+
+    # the xpath to the pagination links
     next_page_xpath = '//div[@class="pagination-group"]/ul/li/a/@href'
+
+    # we only need one rule, and that is to follow
+    # the links from the charts list page
     rules = [
-        #Rule(SgmlLinkExtractor(allow=['\?begin=\d+']), 'parse_chart'),
         Rule(SgmlLinkExtractor(allow=['/charts/\w+'], restrict_xpaths=chart_xpath), callback='parse_chart', follow=True)
     ]
-
-    crawled = set()
 
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)
 
+        # get a list of pages
         next_pages = hxs.select(self.next_page_xpath).extract()
+        # remove javascript links and turn it into a queue
         next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
+
+
         chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0]
 
         chart = ChartItem()
-        print "making NEW chart"
         chart['name'] = chart_name
         chart['origin'] = response.url
         chart['list'] = []
 
+        # ok, we've prepped the chart container, lets start getting the pages
         next_page = next_pages.popleft()
 
         request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages))
@@ -46,7 +53,8 @@ class BillboardSpider(CrawlSpider):
 
     def parse_page(self, response, chart, next_pages):
         hxs = HtmlXPathSelector(response)
-        chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0]
+
+        # parse every chart entry
         list = []
         for item in  hxs.select('//*[@class="printable-row"]'):
             loader = XPathItemLoader(SingleItem(), selector=item)
@@ -58,17 +66,15 @@ class BillboardSpider(CrawlSpider):
             single = loader.load_item()
             list.append(dict(single))
 
-        b4 = len(chart['list'])
         chart['list'] += list
-        print "got EXISTING chart: "
-        print b4, len(list), len(chart['list'])
 
         if len(next_pages) == 0:
-            print "Done with %s" %(chart_name)
+            print "Done with %s" %(chart['name'])
             yield chart
         else:
             next_page = next_pages.popleft()
-            print "Starting nextpage (%s) of %s - %s left" %(next_page, chart_name, len(next_pages))
-            request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages))
+            print "Starting nextpage (%s) of %s - %s left" % (next_page, chart['name'], len(next_pages))
+            request = Request('http://www.billboard.com'+next_page,
+                            callback = lambda r: self.parse_page(r, chart, next_pages))
 
             yield request
