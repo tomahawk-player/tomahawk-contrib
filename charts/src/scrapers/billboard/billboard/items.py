@@ -4,18 +4,15 @@
 # http://doc.scrapy.org/topics/items.html
 
 from scrapy.item import Item, Field
+from scrapy.contrib.loader.processor import TakeFirst
 
 class SingleItem(Item):
-    track = Field()
-    artist = Field()
-    album = Field()
-    rank = Field()
-    visit_id = Field()
-    visit_status = Field()
+    track = Field(output_processor=TakeFirst())
+    artist = Field(output_processor=TakeFirst())
+    album = Field(output_processor=TakeFirst())
+    rank = Field(output_processor=TakeFirst())
 
 class ChartItem(Item):
-    visit_id = Field()
-    visit_status = Field()
     name = Field()
     id = Field()
     origin = Field()
