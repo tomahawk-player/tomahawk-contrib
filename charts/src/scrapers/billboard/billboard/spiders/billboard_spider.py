@@ -44,6 +44,19 @@ class BillboardSpider(CrawlSpider):
         chart['origin'] = response.url
         chart['list'] = []
 
+
+        # lets figure out the content type
+        lower_name = chart_name.lower()
+        if 'albums' in lower_name:
+            chart['type'] = 'Album'
+        elif 'video' in lower_name:
+            chart['type'] = 'Video'
+        elif 'soundtrack' in lower_name:
+            chart['type'] = 'Album'
+        else:
+            chart['type'] = 'Track'
+
+
         # ok, we've prepped the chart container, lets start getting the pages
         next_page = next_pages.popleft()
 
