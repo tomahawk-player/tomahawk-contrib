@@ -18,15 +18,15 @@ class Source(object):
     ABC for sources
     """
 
-    def feed_list(self):
+    def chart_list(self):
         """
-        Return a list of tuples to feeds
+        Return a list of tuples to charts
         (url, display_name)
         """
         raise NotImplementedError("Can't instantiate ABC")
 
-    def get_feed(self, url):
+    def get_chart(self, url):
         """
-        Return the contents of the feed specified by the url
+        Return the contents of the chart specified by the url
         """
         raise NotImplementedError("Can't instantiate ABC")

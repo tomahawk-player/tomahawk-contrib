@@ -15,17 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import lxml.html
+from lxml import etree
 import json
 import urllib2
 import string
+import re
 
 #local includes
-import utils
-from utils.cache import cache
-from utils import feed_fetcher
+from utils import cache
+from utils import url_fetcher
+from source import Source
 
 
-COUNTRY_EXPIRE = 86400 # i day
+COUNTRY_EXPIRE = 86400 # 1 day
 FEED_LIST_EXPIRE = 86400
 
 generator_url = 'http://itunes.apple.com/rss/generator/'
@@ -38,7 +40,7 @@ available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/w
 # This section parses the iTunes generator page and constructs a list of
 # every possible data feed for Music
 
-@cache.cache('get_countries', expire=COUNTRY_EXPIRE)
+@cache.methodcache.cache('get_countries', expire=COUNTRY_EXPIRE)
 def get_countries():
     doc = lxml.html.parse(generator_url)
 
@@ -47,7 +49,7 @@ def get_countries():
     return countries
 
 
-@cache.cache('get_music_feeds', expire=FEED_LIST_EXPIRE)
+@cache.methodcache.cache('get_music_feeds', expire=FEED_LIST_EXPIRE)
 def get_music_feeds(countries):
     # { name: country, charts: [], genres: [] }
     music_data = []
@@ -110,9 +112,81 @@ def get_feed_urls(limit):
 # Use the feed urls constructed previously and fetch them using our
 # fancy feed fetcher.
 
+def wrap_data(name, source, list, type, geo, genre):
+    return locals()
+
+def wrap_entry(rank, track, artist, album):
+    #return {'rank': rank, 'track': track, 'artist': artist, 'album': album}
+    return locals()
+
+def itunes_process(resp, content):
+    if resp.fromcache:
+        # don't update
+        print "got cache hit"
+    if resp.status != 200:
+        print "Error itunes response: " % (resp.status)
+        return
+    list = []
+
+    feed = etree.fromstring(content)
+    ns = {'ns': 'http://www.w3.org/2005/Atom',
+          'im': 'http://itunes.apple.com/rss'}
+
+    id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
+    type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
+    i = 1
+    entries = feed.xpath('/ns:feed/ns:entry', namespaces=ns)
+    for entry in entries:
+        title = entry.xpath('im:name', namespaces=ns)[0].text
+        artist = entry.xpath('im:artist', namespaces=ns)[0].text
+        if type == "Album":
+            album = title
+            track = ''
+        elif type == "Track":
+            track = title
+            album = entry.xpath('im:collection/im:name', namespaces=ns)[0].text
+        rank = i
+        i += 1
+        list.append(wrap_entry(rank, track, artist, album))
+
+    title = feed.xpath('ns:title', namespaces=ns)[0].text
+    geo = None
+    geo_re = re.compile("cc=(.*)")
+    r =  geo_re.search(id)
+    geo = r.groups()[0]
+
+    genre = None
+    genre_re = re.compile("genre=(\d+)/")
+    r =  genre_re.search(id)
+    if r != None:
+        genre = r.groups()[0]
+    chart  = wrap_data(title, 'iTunes', list, type, geo, genre)
+
+    cache.itunesstorage[id] = chart
+    list = cache.itunesstorage.get('itunes', [])
+    list.append(id)
+    cache.itunesstorage['itunes'] = list
 
 def fetch(urls):
-    feed_fetcher.start_job(urls[0:2])
+    url_fetcher.start_job(urls, itunes_process)
+
+def test():
+    fetch( get_feed_urls(10)[0:10] )
+    list  = cache.itunesstorage.get('itunes')
+    for id in list:
+        chart = cache.itunesstorage[id]
+        print chart
+
+class iTunesSource(Source):
+
+    def __init__(self):
+        return
+
+    def chart_list(self):
+        return cache.itunesstorage.get('itunes')
+
+    def get_chart(self, url):
+        return cache.itunesstorage.get(url, None)
 
 
 def main():
