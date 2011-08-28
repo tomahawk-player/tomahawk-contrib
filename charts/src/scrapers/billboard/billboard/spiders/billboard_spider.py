@@ -38,6 +38,7 @@ class BillboardSpider(CrawlSpider):
 
 
         chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0]
+        chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
 
         chart = ChartItem()
         chart['name'] = chart_name
@@ -47,10 +48,12 @@ class BillboardSpider(CrawlSpider):
 
         # lets figure out the content type
         lower_name = chart_name.lower()
-        if 'albums' in lower_name:
+        if chart_type == 'Albums':
             chart['type'] = 'Album'
-        elif 'video' in lower_name:
-            chart['type'] = 'Video'
+        elif chart_type == 'Singles':
+            chart['type'] = 'Track'
+        elif 'albums' in lower_name:
+            chart['type'] = 'Album'
         elif 'soundtrack' in lower_name:
             chart['type'] = 'Album'
         else:
