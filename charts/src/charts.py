@@ -20,37 +20,60 @@
 #
 from sources import itunes
 
+#
 # flask includes
+#
 from flask import Flask, request, session, g, \
                   redirect, url_for, abort, render_template, \
                   flash, make_response, jsonify
-
+from werkzeug.routing import BaseConverter
 #
 #system
+#
 import urllib
 
 DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+# custom url converter
+class RegexConverter(BaseConverter):
+    def __init__(self, url_map, *items):
+        super(RegexConverter, self).__init__(url_map)
+        self.regex = items[0]
+
+app.url_map.converters['regex'] = RegexConverter
+
 
 ## Routes and Handlers ##
 
 itunes_source = itunes.iTunesSource()
+sources = {}
+sources['itunes'] = itunes_source
 
 @app.route('/')
 def welcome():
-    feeds = itunes_source.chart_list()
-    resp = ''
-    for f in feeds:
-       resp += '<a href="/feed/%s">%s</a><br />\n' % (urllib.quote_plus(f), f)
-    return resp
+    return jsonify({'chart_sources': sources.keys(), 'url_prefix': '/source/' })
 
-@app.route('/feed/<path:url>')
-def get_chart(url):
-    print url
-    real_url = urllib.unquote_plus(url)
-    resp = jsonify(itunes_source.get_chart(real_url))
+@app.route('/source/<id>')
+def source(id):
+    source = sources.get(id, None)
+    if source is None:
+        return make_response("No such source", 404)
+    charts = source.chart_list()
+
+    return jsonify({'source': id, 'charts': charts, 'url_prefix': '/source/%s/chart/' % (id)})
+
+@app.route('/source/<id>/chart/<regex(".*"):url>')
+def get_chart(id, url):
+    source = sources.get(id, None)
+    if source is None:
+        return make_response("No such source", 404)
+    url = urllib.unquote_plus(url)
+    chart = source.get_chart(url)
+    if chart is None:
+        return make_response("No such chart", 404)
+    resp = jsonify(chart)
     return resp
 
 if __name__ == '__main__':
