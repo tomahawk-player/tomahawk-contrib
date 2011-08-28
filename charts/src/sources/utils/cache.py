@@ -37,6 +37,7 @@ cache_opts = {
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 
-httpstorage = shove.Shove("file://"+HTTP_CACHE_DIR)
+#httpstorage = shove.Shove("file://"+HTTP_CACHE_DIR)
+httpstorage = shove.Shove()
 
 itunesstorage = CacheStorageLock(shove.Shove("file://"+OUTPUT_DIR+'itunes'))
