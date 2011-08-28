@@ -23,7 +23,7 @@ from sources import itunes
 # flask includes
 from flask import Flask, request, session, g, \
                   redirect, url_for, abort, render_template, \
-                  flash, make_response
+                  flash, make_response, jsonify
 
 #
 #system
@@ -50,9 +50,7 @@ def welcome():
 def get_chart(url):
     print url
     real_url = urllib.unquote_plus(url)
-    data = str(itunes_source.get_chart(real_url))
-    resp = make_response(data)
-    resp.headers['Content-type'] = 'application/json'
+    resp = jsonify(itunes_source.get_chart(real_url))
     return resp
 
 if __name__ == '__main__':
