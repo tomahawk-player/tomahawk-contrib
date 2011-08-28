@@ -94,7 +94,7 @@ def fetch_urls(storage, input_queue, output_queue):
 
         resp, content = h.request(next_url, 'GET')
 
-        output_queue.put( (resp, content) )
+        output_queue.put( (resp, content, next_url ) )
         input_queue.task_done()
     return
 
@@ -103,12 +103,12 @@ def process_response(input_queue, process_func):
     """Thread target for processing the resposnes.
     """
     while True:
-        resp, content = input_queue.get()
+        resp, content, url = input_queue.get()
         if resp is None: # None causes thread to exit
             input_queue.task_done()
             break
 
-        process_func(resp, content)
+        process_func(resp, content, url)
         input_queue.task_done()
     return
 
