@@ -17,21 +17,16 @@ import Queue
 import sys
 import shove
 import threading
-from feedcache import cache
+import httplib2
+from httpcache import HttpCache
+
 #
-# Module
+# local modules
 #
-
-MAX_THREADS=5
-OUTPUT_DIR='/tmp/charts/feedcache'
-TTL=3600
+from cache import MAX_THREADS, TTL, httpstorage
 
 
-def start_job(urls=[], max_threads=MAX_THREADS):
-
-    if not urls:
-        print 'Specify the URLs to a few RSS or Atom feeds on the command line.'
-        return
+def start_job(urls, process_func, storage = None, max_threads=MAX_THREADS):
 
     # Decide how many threads to start
     num_threads = min(len(urls), max_threads)
@@ -49,8 +44,9 @@ def start_job(urls=[], max_threads=MAX_THREADS):
     # Track the entries in the feeds being fetched
     entry_queue = Queue.Queue()
 
-    print 'Saving feed data to', OUTPUT_DIR
-    storage = shove.Shove('file://' + OUTPUT_DIR)
+    if storage is None:
+        storage = httpstorage
+
     try:
 
         # Start a few worker threads
@@ -63,7 +59,7 @@ def start_job(urls=[], max_threads=MAX_THREADS):
             t.start()
 
         # Start a thread to print the results
-        printer_thread = threading.Thread(target=print_entries, args=(entry_queue,))
+        printer_thread = threading.Thread(target=process_response, args=(entry_queue,process_func))
         printer_thread.setDaemon(True)
         printer_thread.start()
 
@@ -87,7 +83,7 @@ def start_job(urls=[], max_threads=MAX_THREADS):
 def fetch_urls(storage, input_queue, output_queue):
     """Thread target for fetching feed data.
     """
-    c = cache.Cache(storage, TTL)
+    h = httplib2.Http(HttpCache(storage))
 
     while True:
         next_url = input_queue.get()
@@ -95,23 +91,23 @@ def fetch_urls(storage, input_queue, output_queue):
             input_queue.task_done()
             break
 
-        feed_data = c.fetch(next_url)
-        for entry in feed_data.entries:
-            output_queue.put( (feed_data.feed, entry) )
+        resp, content = h.request(next_url, 'GET')
+
+        output_queue.put( (resp, content) )
         input_queue.task_done()
     return
 
 
-def print_entries(input_queue):
-    """Thread target for printing the contents of the feeds.
+def process_response(input_queue, process_func):
+    """Thread target for processing the resposnes.
     """
     while True:
-        feed, entry = input_queue.get()
-        if feed is None: # None causes thread to exist
+        resp, content = input_queue.get()
+        if resp is None: # None causes thread to exit
             input_queue.task_done()
             break
 
-        print '%s: %s' % (feed.title, entry.title)
+        process_func(resp, content)
         input_queue.task_done()
     return
 

@@ -13,13 +13,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Contains information regarding caching behavior
+"""
+
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
+import shove
+
+OUTPUT_DIR = '/tmp/charts'
+HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
+MAX_THREADS=5
+TTL=3600
+
 
 cache_opts = {
     'cache.type': 'file',
-    'cache.data_dir': '/tmp/charts/cache/data',
-    'cache.lock_dir': '/tmp/charts/cache/lock'
+    'cache.data_dir': OUTPUT_DIR+'/cache/data',
+    'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
 
-cache = CacheManager(**parse_cache_config_options(cache_opts))
+methodcache = CacheManager(**parse_cache_config_options(cache_opts))
+
+httpstorage = shove.Shove("file://"+HTTP_CACHE_DIR)
