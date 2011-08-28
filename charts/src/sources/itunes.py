@@ -71,6 +71,11 @@ def get_music_feeds(countries):
             # returns a list of tuples, where each tuple
             # contains the genre name and numeric id
             genres = [ (g['value'], g['display'] ) for g in type['genres']['list'] ]
+            stored_genres = cache.itunesstorage.get('genres', {})
+            for g in genres:
+                stored_genres[g[0]] = g[1]
+            cache.itunesstorage['genres'] = stored_genres
+
             # returns a list of tuples, where each tuple
             # contains:
             # url suffix (e.g., 'xml')
@@ -164,6 +169,10 @@ def itunes_process(resp, content):
     r =  genre_re.search(id)
     if r != None:
         genre = r.groups()[0]
+
+    if not genre is None:
+        genres = cache.itunesstorage['genres']
+        genre = genres[genre]
 
     origin = id
     md5 = hashlib.md5()
