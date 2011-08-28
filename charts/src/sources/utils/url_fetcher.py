@@ -76,7 +76,8 @@ def start_job(urls, process_func, storage = None, max_threads=MAX_THREADS):
         printer_thread.join()
 
     finally:
-        storage.close()
+        pass
+        #storage.close()
     return
 
 

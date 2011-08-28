@@ -21,6 +21,8 @@ from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
 import shove
 
+from httpcache import CacheStorageLock
+
 OUTPUT_DIR = '/tmp/charts'
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
@@ -36,3 +38,5 @@ cache_opts = {
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 
 httpstorage = shove.Shove("file://"+HTTP_CACHE_DIR)
+
+itunesstorage = CacheStorageLock(shove.Shove("file://"+OUTPUT_DIR+'itunes'))
