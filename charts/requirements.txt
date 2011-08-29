@@ -1,6 +1,6 @@
 flask
 jinja2
 shove
-feedparser
 beaker
 httplib2
+scrapy
