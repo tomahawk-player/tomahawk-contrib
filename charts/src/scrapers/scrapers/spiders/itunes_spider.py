@@ -23,7 +23,7 @@ cache_opts = {
 }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove('file://'+settings['OUTPUT_DIR']+'/itunes')
+storage = shove.Shove('file://'+settings['OUTPUT_DIR']+'/sources')
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
@@ -35,8 +35,12 @@ def get_countries():
 
     return countries
 
-def get_genre_name(id):
-    return storage['genre_'+id]
+def get_genre(id):
+    return storage['itunesgenre_'+id]
+
+def set_genre(id, name):
+    storage['itunesgenre_'+id] = name
+
 
 @methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
 def get_music_feeds(countries):
@@ -60,7 +64,7 @@ def get_music_feeds(countries):
             # contains the genre name and numeric id
             genres = [ (g['value'], g['display'] ) for g in type['genres']['list'] ]
             for g in genres:
-                storage['genre_'+g[0]] = g[1]
+                set_genre(g[0], g[1])
 
             # returns a list of tuples, where each tuple
             # contains:
@@ -92,20 +96,23 @@ def construct_feeds(music_feeds, limit):
                 feeds.append(url)
     return feeds
 
-def get_feed_urls(limit):
+def get_feed_urls(limit, rss = False):
     feeds = construct_feeds(get_music_feeds(get_countries()), limit)
-    return feeds
+    if rss:
+        return feeds
+    return filter(lambda url: not 'rss.xml' in url, feeds)
 
 class ItunesSpider(BaseSpider):
     name = 'itunes.com'
     allowed_domains = ['itunes.com']
-    start_urls = get_feed_urls(settings['ITUNES_LIMIT'])[0:5]
+    start_urls = get_feed_urls(settings['ITUNES_LIMIT'])
 
     def parse(self, response):
         try:
             feed = etree.fromstring(response.body)
         except etree.XMLSyntaxError:
-            return "Parse error, skipping"
+            log.msg("Parse error, skipping: %s"%(response.url), loglevel=log.WARNING)
+            return None
 
         if feed.tag == '{http://www.w3.org/2005/Atom}feed':
             return self.parse_atom(feed)
@@ -155,7 +162,7 @@ class ItunesSpider(BaseSpider):
             genre = r.groups()[0]
 
         if not genre is None:
-            genre = get_genre_name(genre)
+            genre = get_genre(genre)
 
         origin = id
         md5 = hashlib.md5()
