@@ -13,20 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from utils import cache
+
 class Source(object):
-    """
-    ABC for sources
-    """
+    def __init__(self, name):
+        self.name = name
+        return
 
     def chart_list(self):
-        """
-        Return a list of tuples to charts
-        (url, display_name)
-        """
-        raise NotImplementedError("Can't instantiate ABC")
+        return cache.storage.get(self.name)
 
-    def get_chart(self, url):
-        """
-        Return the contents of the chart specified by the url
-        """
-        raise NotImplementedError("Can't instantiate ABC")
+    def get_chart(self, id):
+        return cache.storage.get(self.name+id, None)

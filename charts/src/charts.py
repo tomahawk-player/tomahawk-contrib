@@ -18,7 +18,7 @@
 #
 # local includes
 #
-from sources import itunes
+from sources.source import Source
 
 #
 # flask includes
@@ -47,9 +47,9 @@ app.url_map.converters['regex'] = RegexConverter
 
 ## Routes and Handlers ##
 
-itunes_source = itunes.iTunesSource()
-sources = {}
-sources['itunes'] = itunes_source
+generic_sources = ['itunes', 'billboard']
+
+sources = { source: Source(source) for source in generic_sources }
 
 @app.route('/')
 def welcome():
