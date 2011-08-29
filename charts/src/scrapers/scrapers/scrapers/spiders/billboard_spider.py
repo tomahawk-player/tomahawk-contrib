@@ -3,7 +3,8 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
-from billboard.items import ChartItem, SingleItem
+from scrapers.items import ChartItem, SingleItem
+from scrapy import log
 
 
 from collections import deque
@@ -37,12 +38,14 @@ class BillboardSpider(CrawlSpider):
         next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
 
 
-        chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0]
+        chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0].strip()
         chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
 
         chart = ChartItem()
         chart['name'] = chart_name
         chart['origin'] = response.url
+        chart['source'] = 'billboard'
+        chart['id'] = chart_name.replace(' ', '-').lower()
         chart['list'] = []
 
 
@@ -85,11 +88,11 @@ class BillboardSpider(CrawlSpider):
         chart['list'] += list
 
         if len(next_pages) == 0:
-            print "Done with %s" %(chart['name'])
+            log.msg("Done with %s" %(chart['name']))
             yield chart
         else:
             next_page = next_pages.popleft()
-            print "Starting nextpage (%s) of %s - %s left" % (next_page, chart['name'], len(next_pages))
+            log.msg("Starting nextpage (%s) of %s - %s left" % (next_page, chart['name'], len(next_pages)))
             request = Request('http://www.billboard.com'+next_page,
                             callback = lambda r: self.parse_page(r, chart, next_pages))
 

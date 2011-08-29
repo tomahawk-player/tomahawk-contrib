@@ -14,7 +14,7 @@ import shove
 from scrapy.conf import settings
 from scrapy import log
 from scrapy.spider import BaseSpider
-from itunes.items import SingleItem, ChartItem
+from scrapers.items import SingleItem, ChartItem
 
 cache_opts = {
     'cache.type': 'file',
@@ -114,7 +114,6 @@ class ItunesSpider(BaseSpider):
             #return # TODO finish rss parsing
 
     def parse_atom(self, feed):
-        print "hi"
         ns = {'ns': 'http://www.w3.org/2005/Atom',
               'im': 'http://itunes.apple.com/rss'}
 
@@ -171,6 +170,6 @@ class ItunesSpider(BaseSpider):
         chart['name'] = title
         chart['type'] = type
         chart['list'] = list
+        chart['source'] = 'itunes'
 
-        print title
         return chart
