@@ -3,8 +3,9 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
-from scrapers.items import ChartItem, SingleItem
 from scrapy import log
+
+from scrapers.items import ChartItem, SingleItem, slugify
 
 
 from collections import deque
@@ -45,7 +46,7 @@ class BillboardSpider(CrawlSpider):
         chart['name'] = chart_name
         chart['origin'] = response.url
         chart['source'] = 'billboard'
-        chart['id'] = chart_name.replace(' ', '-').lower()
+        chart['id'] = slugify(chart_name)
         chart['list'] = []
 
 

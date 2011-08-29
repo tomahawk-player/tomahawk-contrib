@@ -27,7 +27,7 @@ class ScrapersPipeline(object):
 
         source = item['source']
         chart_id = source+item['id']
-        log.msg("Saving %s - %s" %(source, item['id'])
+        log.msg("Saving %s - %s" %(source, item['id']))
 
         list = self.storage.get(source, {})
 
