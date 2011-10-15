@@ -79,7 +79,10 @@ class BillboardSpider(CrawlSpider):
         for item in  hxs.select('//*[@class="printable-row"]'):
             loader = XPathItemLoader(SingleItem(), selector=item)
             loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
-            loader.add_xpath('track', 'div/div[@class="ptitle"]/text()')
+            if(chart['type'] == "Album"):
+            	loader.add_xpath('album', 'div/div[@class="ptitle"]/text()')
+            else:
+            	loader.add_xpath('track', 'div/div[@class="ptitle"]/text()')
             loader.add_xpath('artist', 'div/div[@class="partist"]/text()')
             loader.add_xpath('album', 'div/div[@class="palbum"]/text()')
 
