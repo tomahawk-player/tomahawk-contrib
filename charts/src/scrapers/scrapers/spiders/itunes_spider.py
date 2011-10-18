@@ -153,7 +153,6 @@ class ItunesSpider(BaseSpider):
         geo = None
         geo_re = re.compile("cc=(.*)")
         r =  geo_re.search(id)
-
         if r != None:
            geo = r.groups()[0]
 
@@ -171,19 +170,19 @@ class ItunesSpider(BaseSpider):
         md5.update(id)
         id = md5.hexdigest()
 
-	if geo is None:
-	   geo_s = origin.split("/")
-	   geo = geo_s
-	   
+        if geo is None:
+           geo_s = origin.split("/")
+           geo = geo_s
+
 
         chart = ChartItem()
         chart['id'] = id
         chart['origin'] = origin
         chart['genre'] = genre
         if(geo[3]):
-	  chart['geo'] = geo[3]
+           chart['geo'] = geo[3]
         else:
-	  chart['geo'] = geo
+           chart['geo'] = geo
         chart['name'] = title
         chart['type'] = type
         chart['list'] = list
