@@ -192,6 +192,6 @@ class ItunesSpider(BaseSpider):
         chart['list'] = list
         chart['source'] = 'itunes'
         if(id == settings["ITUNES_DEFAULT_ALBUMCHART"] or id == settings["ITUNES_DEFAULT_TRACKCHART"]):
-	  chart['default'] = 1
+           chart['default'] = 1
 
         return chart
