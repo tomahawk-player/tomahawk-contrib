@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
 #
@@ -61,7 +61,6 @@ def source(id):
     if source is None:
         return make_response("No such source", 404)
     charts = source.chart_list()
-
     return jsonify({'source': id, 'charts': charts, 'url_prefix': '/source/%s/chart/' % (id)})
 
 @app.route('/source/<id>/chart/<regex(".*"):url>')

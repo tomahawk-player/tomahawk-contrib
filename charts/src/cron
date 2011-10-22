@@ -11,5 +11,5 @@ SCRAPER_PATH=/home/hugo/Devel/tomahawk-contrib/charts/src/scrapers
 
 # Minute   Hour   Day of Month       Month          Day of Week        Command    
 # (0-59)  (0-23)     (1-31)    (1-12 or Jan-Dec)  (0-6 or Sun-Sat)             
-*       12         *               *                 4             cd $SCRAPER_PATH && /usr/bin/scrapy crawl billboard.com --set FEED_URI=items.json --set FEED_FORMAT=json &> billboard.$(date +\%Y\%m\%d\%H\%M).log
-*       0        *               *                 *              cd $SCRAPER_PATH && /usr/bin/scrapy crawl itunes.com --set FEED_URI=items.json --set FEED_FORMAT=json &> itunes.$(date +\%Y\%m\%d\%H\%M).log
+*           12         *               *                 4             rm -rf /tmp/charts/sources/billboard* && cd $SCRAPER_PATH && /usr/bin/scrapy crawl billboard.com --set FEED_URI=items.json --set FEED_FORMAT=json &> billboard.$(date +\%Y\%m\%d).log
+*            0         *               *                 *             rm -rf /tmp/charts/sources/itunes* && cd /home/hugo/Devel/tomahawk-contrib/charts/src/scrapers && /usr/bin/scrapy crawl itunes.com --set FEED_URI=items.json --set FEED_FORMAT=json &> itunes.$(date +\%Y\%m\%d).log

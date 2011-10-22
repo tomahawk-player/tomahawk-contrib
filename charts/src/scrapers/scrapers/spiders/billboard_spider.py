@@ -1,3 +1,4 @@
+from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import HtmlXPathSelector
@@ -6,7 +7,6 @@ from scrapy.http import Request
 from scrapy import log
 
 from scrapers.items import ChartItem, SingleItem, slugify
-
 
 from collections import deque
 
@@ -63,6 +63,8 @@ class BillboardSpider(CrawlSpider):
         else:
             chart['type'] = 'Track'
 
+        if(chart['id'] == settings["BILLBOARD_DEFAULT_ALBUMCHART"] or chart['id'] == settings["BILLBOARD_DEFAULT_TRACKCHART"]):
+            chart['default'] = 1
 
         # ok, we've prepped the chart container, lets start getting the pages
         next_page = next_pages.popleft()

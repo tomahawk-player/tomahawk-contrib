@@ -123,9 +123,13 @@ class ItunesSpider(BaseSpider):
     def parse_atom(self, feed):
         ns = {'ns': 'http://www.w3.org/2005/Atom',
               'im': 'http://itunes.apple.com/rss'}
-
-        id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
-        type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
+              
+        try:
+          id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
+          type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
+        except IndexError, e:
+          return
+          
         if type != "Album" and type != "Track":
             return # skip playlists
         i = 1
@@ -187,5 +191,7 @@ class ItunesSpider(BaseSpider):
         chart['type'] = type
         chart['list'] = list
         chart['source'] = 'itunes'
+        if(id == settings["ITUNES_DEFAULT_ALBUMCHART"] or id == settings["ITUNES_DEFAULT_TRACKCHART"]):
+	  chart['default'] = 1
 
         return chart
