@@ -19,7 +19,7 @@ cache_opts = {
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources')
 
-#@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parse():
   consumer = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
   client = oauth.Client(consumer)
