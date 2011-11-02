@@ -8,6 +8,7 @@ import shove
 import sys
 sys.path.append('../scrapers')
 import settings
+from items import ChartItem, SingleItem, slugify
 
 
 cache_opts = {
@@ -76,16 +77,32 @@ def parse():
       
        list = storage.get(source, {})
 
+       chart_list = []
+       chart_name = "Top "+id
+       chart_type = type[:-1].title() 
+
+       chart = ChartItem()
+       chart['name'] = chart_name
+       chart['source'] = "wearehunted"
+       chart['type'] = chart_type
+       chart['default'] = 1
+       chart['id'] = slugify(chart_name)             
+       chart['list'] = j['results']
+       
        # metadata is the chart item minus the actual list plus a size
        metadata = {}
        metadata['id'] = id+d
-       metadata['name'] = "Top "+id
-       metadata['type'] = type
+       metadata['name'] = chart_name
+       metadata['type'] = chart_type
+       metadata['extra'] = id
+       if( c == "1"):
+          metadata['default'] = 1
        metadata['source'] = "wearehunted"
        metadata['size'] = len(j['results'])
+       
        list[chart_id] = metadata
        storage[source] = list
-       storage[chart_id] = dict(j)
+       storage[chart_id] = dict(chart)
      
      
        for e in genres:
@@ -101,23 +118,34 @@ def parse():
        
         
          music_data.append( { "type":id+d+e, "charts": id+d+e } )
-         source = "wearehunted"
          chart_id = source+id+d+e
          print("Saving %s - %s" %(source, chart_id))
       
          list = storage.get(source, {})
 
+         chart_list = []
+         chart_name = "Top "+id+ " in "+ e.title()
+         chart_type = type[:-1].title() 
+
+         chart = ChartItem()
+         chart['name'] = chart_name
+         chart['source'] = "wearehunted"
+         chart['type'] = chart_type
+         chart['id'] = slugify(chart_name)             
+         chart['list'] = j['results']
+         
          # metadata is the chart item minus the actual list plus a size
          metadata = {}
          metadata['id'] = id+d+e
-         metadata['name'] = "Top "+id+ " in "+ e.title()
-         metadata['type'] = type
+         metadata['name'] = chart_name
+         metadata['type'] = chart_type
          metadata['genre'] = e.title()
+         metadata['extra'] = id
          metadata['source'] = "wearehunted"
          metadata['size'] = len(j['results'])
          list[chart_id] = metadata
          storage[source] = list
-         storage[chart_id] = dict(j)   
+         storage[chart_id] = dict(chart)   
        
        
        
