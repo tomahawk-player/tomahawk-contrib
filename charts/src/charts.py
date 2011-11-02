@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
 #
@@ -47,7 +47,7 @@ app.url_map.converters['regex'] = RegexConverter
 
 ## Routes and Handlers ##
 
-generic_sources = ['itunes', 'billboard']
+generic_sources = ['itunes', 'billboard','rdio', 'wearehunted']
 
 sources = { source: Source(source) for source in generic_sources }
 
