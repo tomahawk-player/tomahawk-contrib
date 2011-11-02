@@ -10,12 +10,16 @@ Current Spiders:
 * Billboard.com - billboard.com
 * iTunes Store - itunes.com
 
+Current Apis:
+* Rdio.com
+* WeAreHunted
+
 Upcoming Spiders:
 
 * The Official Charts - theofficialcharts.com
 
 
-Get Going
+Get Going for Spiders
 ---------
 
 1) Install scrapy:
@@ -32,3 +36,10 @@ Get Going
 4) The charts will be in items.json when it completes, as well as in the storage system (see settings.py)
 
 [scrapy]: http://scrapy.org/
+
+Get Going for Apis
+---------
+
+1) Cd in the apis folder
+2) Run the scripts
+3) Finished!
