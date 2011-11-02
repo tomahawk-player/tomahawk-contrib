@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import urllib
 import oauth2 as oauth
 from beaker.cache import CacheManager
