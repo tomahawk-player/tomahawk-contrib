@@ -27,7 +27,7 @@ storage = shove.Shove('file://'+settings['OUTPUT_DIR']+'/sources')
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
-@methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
+#@methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
 def get_countries():
     doc = lxml.html.parse(generator_url)
 
