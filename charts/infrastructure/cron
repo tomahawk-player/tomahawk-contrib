@@ -1,4 +1,4 @@
-INF_PATH=/home/ramblurr/src/tomahawk-contrib/charts/infrastructure
+INF_PATH=/home/charts/tomahawk-contrib/charts/infrastructure
 # Minute   Hour   Day of Month       Month          Day of Week        Command    
 # (0-59)  (0-23)     (1-31)    (1-12 or Jan-Dec)  (0-6 or Sun-Sat)             
 *           12         *               *                 4           cd $INF_PATH && ./cronbash.sh billboard

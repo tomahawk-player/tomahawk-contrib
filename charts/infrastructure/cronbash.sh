@@ -1,6 +1,6 @@
 #!/bin/bash  
 #Change to path, ey?
-SCRAPER_PATH=/home/ramblurr/src/tomahawk-contrib/charts/src/scrapers
+SCRAPER_PATH=/home/charts/tomahawk-contrib/charts/src/scrapers
 API_SCRAPER_PATH=$SCRAPER_PATH/apis
 LOG_PATH=$SCRAPER_PATH/logs
 
