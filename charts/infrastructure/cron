@@ -1,18 +1,7 @@
-#charts
-# Itunes:
-#    Iv read that Itunes updates its charts every 15min. Thats not very likely, but 1hour would be
-#    So how about update the chart every day atleast?
-# Billboard:
-#    Billboard charts are updated weekly, on Thursday mornings by noon Eastern Standard Time (9am Pacific).
-
-#Change to path, ey?
-PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
-SCRAPER_PATH=/home/ramblurr/src/tomahawk-contrib/charts/src/scrapers
-API_SCRAPER_PATH=$SCRAPER_PATH/api
-
+INF_PATH=/home/ramblurr/src/tomahawk-contrib/charts/infrastructure
 # Minute   Hour   Day of Month       Month          Day of Week        Command    
 # (0-59)  (0-23)     (1-31)    (1-12 or Jan-Dec)  (0-6 or Sun-Sat)             
-*           12         *               *                 4             cd $SCRAPER_PATH && /usr/local/bin/scrapy crawl billboard.com --set FEED_FORMAT=json &> billboard.$(date +\%Y\%m\%d).log
-*            0         *               *                 *             cd $SCRAPER_PATH && /usr/local/bin/scrapy crawl itunes.com --set FEED_FORMAT=json &> itunes.$(date +\%Y\%m\%d).log
-*            0         *               *                 *             cd $API_SCRAPER_PATH && python wah.py
-*            0         *               *                 *             cd $API_SCRAPER_PATH && python rdio.py                                                                                                                                                                               
+*           12         *               *                 4           cd $INF_PATH && ./cronbash.sh billboard
+*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh itunes
+*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh wah
+*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh rdio                                                                                                                                                                           
