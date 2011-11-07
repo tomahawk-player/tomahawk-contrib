@@ -37,7 +37,7 @@ cache_opts = {
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources')
 
-#@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parse():
    
    #http://wearehunted.com/api/chart/<chart type>/<period>/
