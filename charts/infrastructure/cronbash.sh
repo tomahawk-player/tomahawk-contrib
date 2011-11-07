@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #Change to path, ey?
-SCRAPER_PATH=/home/hugo/Devel/tomahawk-contrib/charts/src/scrapers
+SCRAPER_PATH=/home/charts/tomahawk-contrib/charts/src/scrapers
 API_SCRAPER_PATH=$SCRAPER_PATH/apis
 LOG_PATH=$SCRAPER_PATH/logs
 
