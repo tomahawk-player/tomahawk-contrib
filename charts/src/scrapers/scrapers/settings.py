@@ -12,7 +12,7 @@ SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'
 DEFAULT_ITEM_CLASS = 'scrapers.items.ScrapersItem'
 USER_AGENT = '%s/%s' % (BOT_NAME, BOT_VERSION)
-
+LOG_LEVEL = 'INFO'
 HTTPCACHE_ENABLED = 1
 HTTPCACHE_DIR = '/tmp/charts/scrapy'
 HTTPCACHE_EXPIRATION_SECS = 7200
