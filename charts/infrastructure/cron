@@ -1,7 +1,7 @@
-INF_PATH=/home/charts/tomahawk-contrib/charts/infrastructure
+PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
 # Minute   Hour   Day of Month       Month          Day of Week        Command    
 # (0-59)  (0-23)     (1-31)    (1-12 or Jan-Dec)  (0-6 or Sun-Sat)             
-*           12         *               *                 4           cd $INF_PATH && ./cronbash.sh billboard
-*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh itunes
-*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh wah
-*            0         *               *                 *           cd $INF_PATH && ./cronbash.sh rdio                                                                                                                                                                           
+*           12         *               *                 4           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh billboard
+*            0         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh itunes
+*            0         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh wah
+*            0         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh rdio  
