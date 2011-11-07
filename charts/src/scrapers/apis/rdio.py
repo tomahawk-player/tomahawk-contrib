@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from time import gmtime, strftime
 import urllib
 import oauth2 as oauth
 from beaker.cache import CacheManager
@@ -66,6 +67,7 @@ def parse():
     chart['source'] = "rdio"
     chart['type'] = chart_type
     chart['id'] = slugify(chart_name)
+    chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
 
     x = []
     i = 1
@@ -94,6 +96,7 @@ def parse():
     metadata['name'] = "Top Overall"
     metadata['type'] = c
     metadata['source'] = "rdio"
+    metadata['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
     if( c == "Track"):
       metadata['default'] = 1
       

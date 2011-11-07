@@ -2,7 +2,7 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/topics/item-pipeline.html
-
+from time import gmtime, strftime
 import shove
 from scrapy.conf import settings
 from scrapy.exceptions import DropItem
@@ -35,6 +35,7 @@ class ScrapersPipeline(object):
         metadata_keys = filter(lambda k: k != 'list', item.keys())
         metadata = { key: item[key] for key in metadata_keys }
         metadata['size'] = len(item['list'])
+        metadata['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         list[chart_id] = metadata
         self.storage[source] = list
         self.storage[chart_id] = dict(item)

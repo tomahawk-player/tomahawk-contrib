@@ -42,6 +42,6 @@ class ChartItem(Item):
     geo = Field()
     source = Field()
     default = Field()
-
+    date = Field()
 class ScrapersItem(ChartItem):
     pass

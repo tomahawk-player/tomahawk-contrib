@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from time import gmtime, strftime
 import urllib2, urllib
 import oauth2 as oauth
 from beaker.cache import CacheManager
@@ -36,7 +37,7 @@ cache_opts = {
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources')
 
-@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+#@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parse():
    
    #http://wearehunted.com/api/chart/<chart type>/<period>/
@@ -102,6 +103,7 @@ def parse():
        chart['source'] = "wearehunted"
        chart['type'] = chart_type
        chart['default'] = 1
+       chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
        chart['id'] = slugify(chart_name)             
        chart['list'] = j['results']
        
@@ -157,6 +159,7 @@ def parse():
          metadata['type'] = chart_type
          metadata['genre'] = e.title()
          metadata['extra'] = id
+         metadata['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
          metadata['source'] = "wearehunted"
          metadata['size'] = len(j['results'])
          list[chart_id] = metadata

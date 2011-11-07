@@ -1,3 +1,4 @@
+from time import gmtime, strftime
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -47,6 +48,7 @@ class BillboardSpider(CrawlSpider):
         chart['origin'] = response.url
         chart['source'] = 'billboard'
         chart['id'] = slugify(chart_name)
+        chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         chart['list'] = []
 
 

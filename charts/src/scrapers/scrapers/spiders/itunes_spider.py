@@ -1,3 +1,4 @@
+from time import gmtime, strftime
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
 import lxml.html
@@ -190,6 +191,7 @@ class ItunesSpider(BaseSpider):
         chart['name'] = title
         chart['type'] = type
         chart['list'] = list
+        chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         chart['source'] = 'itunes'
         if(id == settings["ITUNES_DEFAULT_ALBUMCHART"] or id == settings["ITUNES_DEFAULT_TRACKCHART"]):
            chart['default'] = 1
