@@ -82,10 +82,12 @@ def parse(id, url, genre):
      t = {}
      rank = i
      i += 1
-     t["artist"] = items.pop("artist")
-     t["track"] = items.pop("title")
-     t["album"] = items.pop("album")
-     t["rank"] = rank
+     try:
+       t["artist"] = items.pop("artist").rstrip().strip()
+       t["track"] = items.pop("title").rstrip().strip()
+       t["rank"] = rank
+     except (AttributeError):
+       pass
      x.append(t)
    
    chart['list'] = x
