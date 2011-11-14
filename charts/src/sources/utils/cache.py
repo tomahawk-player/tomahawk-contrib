@@ -22,7 +22,7 @@ from beaker.util import parse_cache_config_options
 import shove
 
 
-OUTPUT_DIR = '/tmp/charts'
+OUTPUT_DIR = '/home/charts/cache'
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
 TTL=3600

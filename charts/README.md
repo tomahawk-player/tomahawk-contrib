@@ -34,7 +34,7 @@ has its own builtin webserver, which we proxy using nginx (see
 
 The storage backend is currently [Shove][shove], a simple object storage
 frontend for various storage backends. We currently use the Filesystem storage
-module, and store the data in `/tmp/charts`, but in the future we could switch
+module, and store the data in `/home/charts/cache`, but in the future we could switch
 to one of the many other Shove supported backends (e.g., Postgres, redis,
 Amazon s3).
 

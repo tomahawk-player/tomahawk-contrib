@@ -14,12 +14,12 @@ DEFAULT_ITEM_CLASS = 'scrapers.items.ScrapersItem'
 USER_AGENT = '%s/%s' % (BOT_NAME, BOT_VERSION)
 LOG_LEVEL = 'INFO'
 HTTPCACHE_ENABLED = 1
-HTTPCACHE_DIR = '/tmp/charts/scrapy'
+HTTPCACHE_DIR = '/home/charts/cache/scrapy'
 HTTPCACHE_EXPIRATION_SECS = 7200
 
 ITEM_PIPELINES = [ 'scrapers.pipelines.ScrapersPipeline' ]
 
-OUTPUT_DIR = '/tmp/charts'
+OUTPUT_DIR = '/home/charts/cache'
 
 
 # billboard specific
