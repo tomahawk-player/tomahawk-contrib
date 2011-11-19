@@ -1,0 +1,6 @@
+[DockmanagerHelper]
+Name=Tomahawk Controls
+Description=Control Tomahawk media playback
+Icon=tomahawk
+AppName=tomahawk
+DBusName=org.mpris.MediaPlayer2.tomahawk
