@@ -51,15 +51,23 @@ class BillboardSpider(CrawlSpider):
         chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         chart['list'] = []
 
-
+        # Correct the grammar to fit our expectations
+        if chart_name == "Germany Tracks"
+          chart_name = "German Tracks"
+        
         # lets figure out the content type
+
         lower_name = chart_name.lower()
         if chart_type == 'Albums':
             chart['type'] = 'Album'
+        elif chart_type == 'Artists':
+            chart['type'] = 'Artist'    
         elif chart_type == 'Singles':
             chart['type'] = 'Track'
         elif 'albums' in lower_name:
             chart['type'] = 'Album'
+        elif 'artists' in lower_name:
+            chart['type'] = 'Artist'    
         elif 'soundtrack' in lower_name:
             chart['type'] = 'Album'
         else:
