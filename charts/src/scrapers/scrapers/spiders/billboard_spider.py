@@ -52,11 +52,10 @@ class BillboardSpider(CrawlSpider):
         chart['list'] = []
 
         # Correct the grammar to fit our expectations
-        if chart_name == "Germany Tracks"
-          chart_name = "German Tracks"
+        if chart_name == 'Germany Tracks':
+            chart_name = 'German Tracks'
         
         # lets figure out the content type
-
         lower_name = chart_name.lower()
         if chart_type == 'Albums':
             chart['type'] = 'Album'
