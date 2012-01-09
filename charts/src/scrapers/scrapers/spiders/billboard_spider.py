@@ -43,6 +43,10 @@ class BillboardSpider(CrawlSpider):
         chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0].strip()
         chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
 
+        # Correct the grammar to fit our expectations
+        if chart_name == 'Germany Songs':
+            chart_name = 'German Tracks'
+        
         chart = ChartItem()
         chart['name'] = chart_name
         chart['origin'] = response.url
@@ -51,10 +55,6 @@ class BillboardSpider(CrawlSpider):
         chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         chart['list'] = []
 
-        # Correct the grammar to fit our expectations
-        if chart_name == 'Germany Tracks':
-            chart_name = 'German Tracks'
-        
         # lets figure out the content type
         lower_name = chart_name.lower()
         if chart_type == 'Albums':
@@ -90,18 +90,14 @@ class BillboardSpider(CrawlSpider):
         for item in  hxs.select('//*[@class="printable-row"]'):
             loader = XPathItemLoader(SingleItem(), selector=item)
             loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
-            if(chart['type'] == "Album"):
-            	loader.add_xpath('album', 'div/div[@class="ptitle"]/text()')
-            else:
-            	loader.add_xpath('track', 'div/div[@class="ptitle"]/text()')
+            # ptitle yields the title for the type, so just set the title to whatever the chartype is.
+            loader.add_xpath(chart['type'].lower(), 'div/div[@class="ptitle"]/text()')
             loader.add_xpath('artist', 'div/div[@class="partist"]/text()')
             loader.add_xpath('album', 'div/div[@class="palbum"]/text()')
 
             single = loader.load_item()
             list.append(dict(single))
-
-        chart['list'] += list
-
+            
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
             yield chart
