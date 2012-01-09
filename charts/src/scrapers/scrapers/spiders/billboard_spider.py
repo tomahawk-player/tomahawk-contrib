@@ -21,7 +21,6 @@ class BillboardSpider(CrawlSpider):
 
     # xpath to retrieve the urls to specific charts
     chart_xpath = '//div[@class="units"]/ul/li/div[@class="chart"]/h2/a'
-
     # the xpath to the pagination links
     next_page_xpath = '//div[@class="pagination-group"]/ul/li/a/@href'
 
@@ -32,16 +31,16 @@ class BillboardSpider(CrawlSpider):
     ]
 
     def parse_chart(self, response):
+      
         hxs = HtmlXPathSelector(response)
-
-        # get a list of pages
-        next_pages = hxs.select(self.next_page_xpath).extract()
-        # remove javascript links and turn it into a queue
-        next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
-
 
         chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0].strip()
         chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
+
+        # get a list of pages
+        next_pages = hxs.select(self.next_page_xpath).extract()
+        # remove javascript links and turn it into a queue, also, we want to exclude next chart (!)
+        next_pages = deque(filter(lambda e: not 'javascript' or slugify(chart_name) in e, next_pages))
 
         # Correct the grammar to fit our expectations
         if chart_name == 'Germany Songs':
@@ -83,11 +82,12 @@ class BillboardSpider(CrawlSpider):
         yield request
 
     def parse_page(self, response, chart, next_pages):
+        
         hxs = HtmlXPathSelector(response)
 
         # parse every chart entry
         list = []
-        for item in  hxs.select('//*[@class="printable-row"]'):
+        for item in hxs.select('//*[@class="printable-row"]'):
             loader = XPathItemLoader(SingleItem(), selector=item)
             loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
             # ptitle yields the title for the type, so just set the title to whatever the chartype is.
@@ -98,6 +98,8 @@ class BillboardSpider(CrawlSpider):
             single = loader.load_item()
             list.append(dict(single))
             
+        chart['list'] += list
+
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
             yield chart
@@ -106,5 +108,4 @@ class BillboardSpider(CrawlSpider):
             log.msg("Starting nextpage (%s) of %s - %s left" % (next_page, chart['name'], len(next_pages)))
             request = Request('http://www.billboard.com'+next_page,
                             callback = lambda r: self.parse_page(r, chart, next_pages))
-
             yield request
