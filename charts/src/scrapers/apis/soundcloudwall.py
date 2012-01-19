@@ -72,53 +72,55 @@ def parseUrl(url, title, default):
 	content = the_page.decode('utf-8')
 	j = json.loads(content)
 	
-	type = "Track"
-	id = slugify(title)
-	source = "soundcloudwall.com"
-	chart_id = source+id
+	if( len(j) != 0 ):
+		
+		type = "Track"
+		id = slugify(title)
+		source = "soundcloudwall.com"
+		chart_id = source+id
 	
-	print("Saving %s - %s" %(source, chart_id))
+		print("Saving %s - %s" %(source, chart_id))
 
-	list = storage.get(source, {})
+		list = storage.get(source, {})
 
-	chart_list = []
-	chart_name = title.title()
-	chart_type = type
-	chart = ChartItem()
-	chart['name'] = chart_name
-	chart['source'] = source
-	chart['type'] = chart_type
-	chart['default'] = default
-	chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
-	chart['id'] = slugify(chart_name)           
+		chart_list = []
+		chart_name = title.title()
+		chart_type = type
+		chart = ChartItem()
+		chart['name'] = chart_name
+		chart['source'] = source
+		chart['type'] = chart_type
+		chart['default'] = default
+		chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+		chart['id'] = slugify(chart_name)           
 
-	x = []
-	i = 1
-	for items in j:
-	   t = {}
-	   rank = i
-	   i += 1
-	   try:
-	     t["artist"] = items.pop("username").rstrip().strip()
-	     t["track"] = items.pop("title").rstrip().strip()
-	     t["rank"] = rank
-	     t['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=TiNg2DRYhBnp01DA3zNag" 
-	   except (AttributeError):
-	     pass
-	   x.append(t)
+		x = []
+		i = 1
+		for items in j:
+		   t = {}
+		   rank = i
+		   i += 1
+		   try:
+		     t["artist"] = items.pop("username").rstrip().strip()
+		     t["track"] = items.pop("title").rstrip().strip()
+		     t["rank"] = rank
+		     t['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=TiNg2DRYhBnp01DA3zNag" 
+		   except (AttributeError):
+		     pass
+		   x.append(t)
 
-	chart['list'] = x
-	# metadata is the chart item minus the actual list plus a size
-	metadata = {}
-	metadata['id'] = id
-	metadata['name'] = chart_name
-	metadata['type'] = chart_type
-	metadata['default'] = default
-	metadata['source'] = source
-	metadata['size'] = len(j)
+		chart['list'] = x
+		# metadata is the chart item minus the actual list plus a size
+		metadata = {}
+		metadata['id'] = id
+		metadata['name'] = chart_name
+		metadata['type'] = chart_type
+		metadata['default'] = default
+		metadata['source'] = source
+		metadata['size'] = len(j)
 
-	list[chart_id] = metadata
-	storage[source] = list
-	storage[chart_id] = dict(chart)
+		list[chart_id] = metadata
+		storage[source] = list
+		storage[chart_id] = dict(chart)
 	
 createUrl()
