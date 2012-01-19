@@ -54,4 +54,6 @@ case "$1" in
 ;;
   "exfm") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
+  "soundcloudwall") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+;;
 esac
