@@ -47,7 +47,7 @@ app.url_map.converters['regex'] = RegexConverter
 
 ## Routes and Handlers ##
 
-generic_sources = ['itunes', 'billboard','rdio', 'wearehunted', 'ex.fm']
+generic_sources = ['itunes', 'billboard','rdio', 'wearehunted', 'ex.fm', 'soundcloudwall.com']
 
 sources = { source: Source(source) for source in generic_sources }
 
