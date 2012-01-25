@@ -58,7 +58,7 @@ def createUrl():
       parseUrl(url, title, default)
       for i in range(minrange,maxrange+1):
 	     if( now.year == y and now.month == i):
-		    default = 1
+	  	    default = 1
 	     title = basetitle + calendar.month_name[i] + " " + str(y)
 	     parseUrl( url + "/" + calendar.month_name[i], title, default )
 
@@ -101,8 +101,30 @@ def parseUrl(url, title, default):
 		   rank = i
 		   i += 1
 		   try:
-		     t["artist"] = items.pop("username").rstrip().strip()
+		     
 		     t["track"] = items.pop("title").rstrip().strip()
+		     try:
+				t["artist"] = t["track"][:t["track"].index(" - ")]
+				t["track"] = t["track"][t["track"].index(" - ")+3:]
+		     except (ValueError):
+				try:
+					t["artist"] = t["track"][:t["track"].index(" -")]
+					t["track"] = t["track"][t["track"].index(" -")+2:]
+				except (ValueError):	
+					try:
+						t["artist"] = t["track"][:t["track"].index(": ")]
+						t["track"] = t["track"][t["track"].index(": ")+2:]
+					except (ValueError):
+						try:
+							t["artist"] = t["track"][:t["track"].index(":")]
+							t["track"] = t["track"][t["track"].index(":")+1:]
+						except (ValueError):
+							try:
+								t["artist"] = t["track"][:t["track"].index("\u2014")]
+								t["track"] = t["track"][t["track"].index("\u2014")+1:]
+							except (ValueError):
+								t["artist"] = items.pop("username").rstrip().strip()
+			 
 		     t["rank"] = rank
 		     t['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=TiNg2DRYhBnp01DA3zNag" 
 		   except (AttributeError):
