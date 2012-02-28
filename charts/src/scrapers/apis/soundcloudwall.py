@@ -77,7 +77,7 @@ def parseUrl(url, title, default):
 		
 		type = "Track"
 		id = slugify(title)
-		source = "soundcloudwall.com"
+		source = "SoundcloudWall"
 		chart_id = source+id
 	
 		print("Saving %s - %s" %(source, chart_id))
