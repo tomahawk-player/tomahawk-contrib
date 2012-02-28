@@ -53,7 +53,7 @@ def createUrl():
 	     minrange = 5
       
       url = base + str(y)
-      basetitle = "1000 Most Influential Tracks of "
+      basetitle = "100 Most Influential Tracks of "
       title = basetitle + str(y)
       parseUrl(url, title, default)
       for i in range(minrange,maxrange+1):
@@ -71,6 +71,7 @@ def parseUrl(url, title, default):
 	the_page = response.read()
 	content = the_page.decode('utf-8')
 	j = json.loads(content)
+	
 	
 	if( len(j) != 0 ):
 		
@@ -96,40 +97,45 @@ def parseUrl(url, title, default):
 
 		x = []
 		i = 1
+		count = 0;
 		for items in j:
 		   t = {}
 		   rank = i
 		   i += 1
-		   try:
-		     
-		     t["track"] = items.pop("title").rstrip().strip()
+		   if( count < 100):
 		     try:
-				t["artist"] = t["track"][:t["track"].index(" - ")]
-				t["track"] = t["track"][t["track"].index(" - ")+3:]
-		     except (ValueError):
-				try:
-					t["artist"] = t["track"][:t["track"].index(" -")]
-					t["track"] = t["track"][t["track"].index(" -")+2:]
-				except (ValueError):	
-					try:
-						t["artist"] = t["track"][:t["track"].index(": ")]
-						t["track"] = t["track"][t["track"].index(": ")+2:]
-					except (ValueError):
-						try:
-							t["artist"] = t["track"][:t["track"].index(":")]
-							t["track"] = t["track"][t["track"].index(":")+1:]
-						except (ValueError):
-							try:
-								t["artist"] = t["track"][:t["track"].index("\u2014")]
-								t["track"] = t["track"][t["track"].index("\u2014")+1:]
-							except (ValueError):
-								t["artist"] = items.pop("username").rstrip().strip()
+		     
+		       t["track"] = items.pop("title").rstrip().strip()
+		       try:
+				  t["artist"] = t["track"][:t["track"].index(" - ")]
+				  t["track"] = t["track"][t["track"].index(" - ")+3:]
+		       except (ValueError):
+				  try:
+				 	  t["artist"] = t["track"][:t["track"].index(" -")]
+					  t["track"] = t["track"][t["track"].index(" -")+2:]
+				  except (ValueError):	
+					  try:
+						  t["artist"] = t["track"][:t["track"].index(": ")]
+						  t["track"] = t["track"][t["track"].index(": ")+2:]
+					  except (ValueError):
+						  try:
+							  t["artist"] = t["track"][:t["track"].index(":")]
+							  t["track"] = t["track"][t["track"].index(":")+1:]
+						  except (ValueError):
+							  try:
+								  t["artist"] = t["track"][:t["track"].index("\u2014")]
+								  t["track"] = t["track"][t["track"].index("\u2014")+1:]
+							  except (ValueError):
+								  t["artist"] = items.pop("username").rstrip().strip()
 			 
-		     t["rank"] = rank
-		     t['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=TiNg2DRYhBnp01DA3zNag" 
-		   except (AttributeError):
-		     pass
-		   x.append(t)
+		       t["rank"] = rank
+		       t['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=TiNg2DRYhBnp01DA3zNag" 
+		     except (AttributeError):
+		       pass
+		     print "Appending"
+		     count += 1
+		     print count
+		     x.append(t)
 
 		chart['list'] = x
 		# metadata is the chart item minus the actual list plus a size
@@ -139,7 +145,7 @@ def parseUrl(url, title, default):
 		metadata['type'] = chart_type
 		metadata['default'] = default
 		metadata['source'] = source
-		metadata['size'] = len(j)
+		metadata['size'] = count
 
 		list[chart_id] = metadata
 		storage[source] = list
