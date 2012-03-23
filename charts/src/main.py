@@ -18,6 +18,7 @@
 #
 # local includes
 #
+from resources.charts import charts
 from resources.charts_old import charts_old
 
 #
@@ -39,6 +40,7 @@ class RegexConverter(BaseConverter):
 app.url_map.converters['regex'] = RegexConverter
 
 app.register_blueprint(charts_old)
+app.register_blueprint(charts)
 
 if __name__ == '__main__':
     app.run(port=8080)
