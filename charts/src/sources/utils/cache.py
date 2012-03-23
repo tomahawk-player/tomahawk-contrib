@@ -41,3 +41,4 @@ cache_opts = {
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 
 storage = shove.Shove("file://"+OUTPUT_DIR+'/sources')
+newreleases = shove.Shove("file://"+OUTPUT_DIR+'/newreleases')

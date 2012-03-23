@@ -25,3 +25,9 @@ class Source(object):
 
     def get_chart(self, id):
         return cache.storage.get(self.name+id, None)
+
+    def newreleases_list(self):
+        return cache.newreleases.get(self.name)
+
+    def get_newreleases(self, id):
+        return cache.newreleases.get(self.name+id, None)

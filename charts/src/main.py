@@ -20,6 +20,7 @@
 #
 from resources.charts import charts
 from resources.charts_old import charts_old
+from resources.newreleases import newreleases
 
 #
 # flask includes
@@ -41,6 +42,7 @@ app.url_map.converters['regex'] = RegexConverter
 
 app.register_blueprint(charts_old)
 app.register_blueprint(charts)
+app.register_blueprint(newreleases)
 
 if __name__ == '__main__':
     app.run(port=8080)
