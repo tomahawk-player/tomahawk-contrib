@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Casey Link <unnamedrambler@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -23,7 +23,7 @@ from sources.source import Source
 #
 # flask includes
 #
-from flask import Flask, request, session, g, \
+from flask import Blueprint, Flask, request, session, g, \
                   redirect, url_for, abort, render_template, \
                   flash, make_response, jsonify
 from werkzeug.routing import BaseConverter
@@ -32,18 +32,7 @@ from werkzeug.routing import BaseConverter
 #
 import urllib
 
-DEBUG = True
-app = Flask(__name__)
-app.config.from_object(__name__)
-
-# custom url converter
-class RegexConverter(BaseConverter):
-    def __init__(self, url_map, *items):
-        super(RegexConverter, self).__init__(url_map)
-        self.regex = items[0]
-
-app.url_map.converters['regex'] = RegexConverter
-
+charts_old = Blueprint('charts_old', __name__)
 
 ## Routes and Handlers ##
 
@@ -51,11 +40,11 @@ generic_sources = ['itunes', 'billboard','rdio', 'wearehunted', 'ex.fm', 'soundc
 
 sources = { source: Source(source) for source in generic_sources }
 
-@app.route('/')
+@charts_old.route('/')
 def welcome():
     return jsonify({'chart_sources': sources.keys(), 'url_prefix': '/source/' })
 
-@app.route('/source/<id>')
+@charts_old.route('/source/<id>')
 def source(id):
     source = sources.get(id, None)
     if source is None:
@@ -63,7 +52,7 @@ def source(id):
     charts = source.chart_list()
     return jsonify({'source': id, 'charts': charts, 'url_prefix': '/source/%s/chart/' % (id)})
 
-@app.route('/source/<id>/chart/<regex(".*"):url>')
+@charts_old.route('/source/<id>/chart/<regex(".*"):url>')
 def get_chart(id, url):
     source = sources.get(id, None)
     if source is None:
@@ -75,5 +64,3 @@ def get_chart(id, url):
     resp = jsonify(chart)
     return resp
 
-if __name__ == '__main__':
-    app.run(port=8080)
