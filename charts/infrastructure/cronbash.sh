@@ -17,6 +17,8 @@
 
 #Change to path, ey?
 SCRAPER_PATH=${SCRAPER_PATH:="/home/charts/tomahawk-contrib/charts/src/scrapers"}
+LOG_LEVEL=${LOG_LEVEL:="CRITICAL"}
+
 API_SCRAPER_PATH=$SCRAPER_PATH/apis
 LOG_PATH=$SCRAPER_PATH/logs
 
@@ -44,9 +46,9 @@ fi
 PYTHONV=${2:-python}
 
 case "$1" in
-  "itunes") cd $SCRAPER_PATH && scrapy crawl itunes.com --set FEED_FORMAT=json --loglevel=CRITICAL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+  "itunes") cd $SCRAPER_PATH && scrapy crawl itunes.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
-  "billboard") cd $SCRAPER_PATH && scrapy crawl billboard.com --set FEED_FORMAT=json --loglevel=CRITICAL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+  "billboard") cd $SCRAPER_PATH && scrapy crawl billboard.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
   "rdio") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log   
 ;;

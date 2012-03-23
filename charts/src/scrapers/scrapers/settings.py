@@ -5,16 +5,22 @@
 #
 #     http://doc.scrapy.org/topics/settings.html
 #
+import os
+
 BOT_NAME = 'scrapers'
 BOT_VERSION = '1.0'
-BASEDIR = '/home/charts/cache/' #'/Users/hugo/cache/' 
+try:
+    BASEDIR = os.environ['OUTPUT_DIR']
+except KeyError:
+    BASEDIR = '/home/charts/cache'
+
 SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'
 DEFAULT_ITEM_CLASS = 'scrapers.items.ScrapersItem'
 USER_AGENT = '%s/%s' % (BOT_NAME, BOT_VERSION)
 LOG_LEVEL = 'INFO'
 HTTPCACHE_ENABLED = 1
-HTTPCACHE_DIR = BASEDIR + 'scrapy'
+HTTPCACHE_DIR = BASEDIR + '/scrapy'
 HTTPCACHE_EXPIRATION_SECS = 7200
 
 ITEM_PIPELINES = [ 'scrapers.pipelines.ScrapersPipeline' ]
