@@ -20,9 +20,13 @@ Contains information regarding caching behavior
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
 import shove
+import os
 
+try:
+    OUTPUT_DIR = os.environ['OUTPUT_DIR']
+except KeyError:
+    OUTPUT_DIR = '/home/charts/cache'
 
-OUTPUT_DIR = '/home/charts/cache'
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
 TTL=3600
