@@ -18,6 +18,17 @@
 #
 # local includes
 #
+"""
+This is an old-style api from when this app contained only charts.
+
+it presents an API in this style
+/ : list of chart sources
+/sources/<name> : list of charts for source
+/sources/<name>/chart/<id> : chart data
+
+Eventually this should be deleted.
+"""
+
 from sources.source import Source
 
 #

@@ -14,6 +14,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+New style charts api.
+
+URL structure:
+
+/charts : contains resources with charts
+/charts/<name> : list of charts for a source
+/charts/<name>/<id> : chart data for source
+"""
 
 #
 # local includes
