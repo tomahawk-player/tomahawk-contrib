@@ -51,7 +51,13 @@ Install pip, the python packge tool:
     sudo pacman -S python2-pip
     OR
     sudo zypper install python-pip
-    
+
+To avoid polluting your system with python packages, it is recommended you use
+`virtualenv`. This is a tool which creates a virtual python env in any
+directory you choose. Setting it up is easy, though outside the scope of this
+doc. Google 'python virtualenv pip' or read this page
+http://jontourage.com/2011/02/09/virtualenv-pip-basics/
+
 Install dependencies:
 
     pip install -U -r requirements.txt
