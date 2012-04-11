@@ -41,7 +41,7 @@ newrelease_store = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+
 API_URI = "http://api.rovicorp.com/"
 KEY = "7jxr9zggt45h6rg2n4ss3mrj"
 SECRET = "XUnYutaAW6"
-DAYS_AGO = 60
+DAYS_AGO = 365
 MAX_ALBUMS = 30
 SOURCE = "rovi"
 
@@ -116,9 +116,6 @@ def parse_albums(name, albums):
     list =  []
     start_date = (datetime.datetime.now() + datetime.timedelta(-DAYS_AGO))
     for album in albums:
-        # enforce max albums limit
-        if len(list) >= MAX_ALBUMS:
-            break
         album = album['album']
         title = album['title']
         artist = " ".join([ artist['name'] for artist in album['primaryArtists'] ])
@@ -143,6 +140,10 @@ def parse_albums(name, albums):
              'date': release_date
             })
     list = sorted(list, key=itemgetter('date'))
+    if(len(list) > MAX_ALBUMS):
+        print("Slicing list from %s to %s" %(len(list), MAX_ALBUMS))
+        list = list[-MAX_ALBUMS:]
+
 
     chart_id = slugify(name)
     chart = ChartItem()
