@@ -59,6 +59,7 @@ def sign_args(args):
 def request(method, args):
     args = sign_args(args);
     url = "%s%s?%s" % (API_URI, method, urllib.urlencode(args))
+    print("fetching: " + url)
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     the_page = response.read()
@@ -89,12 +90,14 @@ def fetch_newreleases(genre):
     args = {
         "entitytype": "album",
         "facet": "genre",
-        "filter": "releasedate>%s,genreid:%s" % (start_date,genre[0]),
+        "filter": "releasedate>%s" % (start_date),
+        "filter": "genreid:%s" % (genre[0]),
         "size": "100",
         "offset": "0",
         "country": "US",
         "format": "json"
     }
+    print("fetching new releases for %s after %s" % (genre, start_date))
     j = request(method, args)
     try:
         status = j['searchResponse']['controlSet']['status'].strip()
