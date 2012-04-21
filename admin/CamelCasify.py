@@ -21,6 +21,8 @@ print "There are %i files left" % counter
 for root, dirs, files in os.walk( rootdir ):
     files.sort()
     for currfile in files:
+        if "thirdparty" in os.path.join( root, currfile ):
+            continue
         if currfile == "main.cpp" or currfile == "CMakeLists.txt" or currfile == "resources.qrc" or currfile == "gen_schema.h.sh": #or ( not currfile == "source.h" and not currfile == "resolver.h" and not currfile == "resolver.cpp" ):
             continue
         #if not currfile == "lineedit_p.h":
