@@ -11,7 +11,11 @@ rootdir = "/home/jeff/src/tomahawk-virgin/src"
 counter = 0
 for root, dirs, files in os.walk( rootdir ):
     for currfile in files:
-        if currfile == "main.cpp" or currfile == "CMakeLists.txt" or currfile == "resources.qrc":
+        if "thirdparty" in os.path.join( root, currfile ):
+            continue
+        if "taghandlers" in os.path.join( root, currfile ):
+            continue
+        if currfile == "main.cpp" or currfile == "CMakeLists.txt" or currfile == "resources.qrc" or currfile == "gen_schema.h.sh":
             continue
         if re.match(r"^[a-z1-9_\.]+$", currfile):
             counter = counter + 1
@@ -23,7 +27,9 @@ for root, dirs, files in os.walk( rootdir ):
     for currfile in files:
         if "thirdparty" in os.path.join( root, currfile ):
             continue
-        if currfile == "main.cpp" or currfile == "CMakeLists.txt" or currfile == "resources.qrc" or currfile == "gen_schema.h.sh": #or ( not currfile == "source.h" and not currfile == "resolver.h" and not currfile == "resolver.cpp" ):
+        if "taghandlers" in os.path.join( root, currfile ):
+            continue
+        if currfile == "main.cpp" or currfile == "CMakeLists.txt" or currfile == "resources.qrc" or currfile == "gen_schema.h.sh":
             continue
         #if not currfile == "lineedit_p.h":
             #continue
