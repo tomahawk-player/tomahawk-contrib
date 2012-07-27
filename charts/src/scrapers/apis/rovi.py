@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (C) 2012 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -42,8 +43,8 @@ API_URI = "http://api.rovicorp.com/"
 KEY = "7jxr9zggt45h6rg2n4ss3mrj"
 SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
-MAX_ALBUMS = 30
-SOURCE = "rovi"
+MAX_ALBUMS = 50
+SOURCE = "roviTest"
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
@@ -56,9 +57,9 @@ def sign_args(args):
     args['sig'] = make_sig()
     return args
 
-def request(method, args):
+def request(method, args, additionalValue=None):
     args = sign_args(args);
-    url = "%s%s?%s" % (API_URI, method, urllib.urlencode(args))
+    url = "%s%s?%s%s" % (API_URI, method, urllib.urlencode(args), additionalValue if additionalValue is not None else "" )
     print("fetching: " + url)
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
@@ -83,22 +84,20 @@ def fetch_genres():
 
     return [ (item['id'], item['name']) for item in j['genres'] ]
 
+def fetch_neweditorials(genre):
 
-def fetch_newreleases(genre):
-    start_date = (datetime.datetime.now() + datetime.timedelta(-DAYS_AGO)).strftime("%Y%m%d")
     method = "search/v2/music/filterbrowse"
     args = {
         "entitytype": "album",
         "facet": "genre",
-        "filter": "releasedate>%s" % (start_date),
         "filter": "genreid:%s" % (genre[0]),
-        "size": "100",
+        "size": "200",
         "offset": "0",
         "country": "US",
         "format": "json"
     }
-    print("fetching new releases for %s after %s" % (genre, start_date))
-    j = request(method, args)
+    print("fetching new editorials for %s within %s" % (genre, datetime.datetime.now().year-1))
+    j = request(method, args,"&filter=releaseyear>:%s%s" % (datetime.datetime.now().year-1, "&filter=editorialrating>:7"))
     try:
         status = j['searchResponse']['controlSet']['status'].strip()
         if status != "ok":
@@ -108,44 +107,80 @@ def fetch_newreleases(genre):
 
     return j['searchResponse']['results']
 
-def parse_albums(name, albums):
+def fetch_newreleases(genre):
+    method = "search/v2/music/filterbrowse"
+    args = {
+        "entitytype": "album",
+        "facet": "genre",
+        "filter": "genreid:%s" % (genre[0]),
+        "size": "1000",
+        "offset": "0",
+        "country": "US",
+        "format": "json"
+    }
+    print("fetching new releases for %s within %s" % (genre, datetime.datetime.now().year-1))
+    print args
+    j = request(method, args,"&filter=releaseyear>:%s" % (datetime.datetime.now().year-1))
+    try:
+        status = j['searchResponse']['controlSet']['status'].strip()
+        if status != "ok":
+            return None
+    except KeyError:
+        return None;
+
+    return j['searchResponse']['results']
+
+def parse_albums(name, albums, isEditorial=False):
     if albums is None:
         # something went wrong
         return
 
     list =  []
-    start_date = (datetime.datetime.now() + datetime.timedelta(-DAYS_AGO))
+    nullList = []
     for album in albums:
-        album = album['album']
-        title = album['title']
-        artist = " ".join([ artist['name'] for artist in album['primaryArtists'] ])
-        release_date = album['originalReleaseDate']
-
-        # rovi often includes "re-releases" woth older release dates
-        # we filter those out here
         try:
-            rdate = datetime.datetime.strptime(release_date, "%Y-%m-%d")
-            if rdate < start_date:
-                continue
-        except ValueError:
-            # date string probably contained a '?', ignore it
-            continue
-        except TypeError:
-            # sometimes the date field is empty, we ignore those too
-            continue
+            album = album['album']
+            title = album['title']
+            artist = " ".join([ artist['name'] for artist in album['primaryArtists'] ])
+            release_date = album['originalReleaseDate']
+            rating = album['rating']
+            # instead of filter out by releasedate, we search the api by releaseyear
+            # the result seems to be more appealing
+            # Note: some albums have Null releaseDate, this doesnt necessarily mean
+            # that the release date isnt within our range. We include some of them as well
+            if release_date is not None :
+                 list.append (
+                    {'album': title,
+                     'artist': artist,
+                     'date': release_date,
+                     'rating': rating
+                 })
+            else :
+                nullList.append (
+                   {'album': title,
+                    'artist': artist,
+                    'date': release_date,
+                    'rating': rating
+                })
+        except :
+             continue
 
-        list.append (
-            {'album': title,
-             'artist': artist,
-             'date': release_date
-            })
+    if(len(nullList) > MAX_ALBUMS):
+        print("Slicing NUllList from %s to %s" %(len(nullList), MAX_ALBUMS))
+        nullList = nullList[-MAX_ALBUMS:]
+
     list = sorted(list, key=itemgetter('date'))
     if(len(list) > MAX_ALBUMS):
         print("Slicing list from %s to %s" %(len(list), MAX_ALBUMS))
         list = list[-MAX_ALBUMS:]
 
+    list = nullList + list
+    id = name
+    if isEditorial is True :
+        list = sorted(list, key=itemgetter('rating'))
+        id = "editorial"+id
 
-    chart_id = slugify(name)
+    chart_id = slugify(id)
     chart = ChartItem()
     chart['name'] = name
     chart['source'] = SOURCE
@@ -159,7 +194,8 @@ def parse_albums(name, albums):
     metadata_keys = filter(lambda k: k != 'list', chart)
     metadata = { key: chart[key] for key in metadata_keys }
     metadata['size'] = len(list)
-
+    if isEditorial is True :
+       metadata['extra'] = "Editorial Choices"
     metadatas = newrelease_store.get(SOURCE, {})
     metadatas[chart_id] = metadata
     newrelease_store[SOURCE] = metadatas
@@ -170,4 +206,4 @@ def parse_albums(name, albums):
 if __name__ == '__main__':
     for genre in fetch_genres():
         parse_albums("%s" %(genre[1]), fetch_newreleases(genre))
-
+        parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
