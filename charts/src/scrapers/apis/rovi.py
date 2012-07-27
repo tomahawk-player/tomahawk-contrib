@@ -44,7 +44,7 @@ KEY = "7jxr9zggt45h6rg2n4ss3mrj"
 SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
 MAX_ALBUMS = 50
-SOURCE = "roviTest"
+SOURCE = "rovi"
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
