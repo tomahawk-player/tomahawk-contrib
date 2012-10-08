@@ -14,7 +14,7 @@ class ScrapersPipeline(object):
         self.storage = None
 
     def open_spider(self, spider):
-        self.storage = shove.Shove("file://"+settings['OUTPUT_DIR']+'/sources')
+        self.storage = shove.Shove("file://"+settings['OUTPUT_DIR']+'/sources', optimize=False)
 
 
     def process_item(self, item, spider):

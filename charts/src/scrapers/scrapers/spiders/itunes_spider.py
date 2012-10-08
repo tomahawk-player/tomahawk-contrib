@@ -24,7 +24,7 @@ cache_opts = {
 }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove('file://'+settings['OUTPUT_DIR']+'/sources')
+storage = shove.Shove('file://'+settings['OUTPUT_DIR']+'/sources', optimize=False)
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 

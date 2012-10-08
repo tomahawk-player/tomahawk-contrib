@@ -35,7 +35,7 @@ cache_opts = {
 }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources')
+storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources', optimize=False)
 
 @methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parse():

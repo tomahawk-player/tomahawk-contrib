@@ -37,7 +37,7 @@ cache_opts = {
 }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-newrelease_store = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/newreleases')
+newrelease_store = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/newreleases', optimize=False)
 
 API_URI = "http://api.rovicorp.com/"
 KEY = "7jxr9zggt45h6rg2n4ss3mrj"
