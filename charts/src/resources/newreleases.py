@@ -40,7 +40,7 @@ from werkzeug.routing import BaseConverter
 #system
 #
 import urllib
-
+from pkg_resources import parse_version
 newreleases = Blueprint('newreleases', __name__)
 
 ## Routes and Handlers ##
@@ -66,6 +66,11 @@ def source(id):
     newreleases = source.newreleases_list()
     if newreleases is None:
         return make_response("No new releases", 404)
+    # Check version from tomakawk, editorials didnt make it to 0.5.5
+    version = request.args.get("version")
+    if version is None or parse_version('0.5.99') > parse_version(version) :
+        metadata_keys = filter(lambda k: not "editorial" in k, newreleases)
+        newreleases = { key: newreleases[key] for key in metadata_keys }
     for nr in newreleases:
         newreleases[nr]['link'] = "/newreleases/%s/%s" %(id, newreleases[nr]['id'])
 
