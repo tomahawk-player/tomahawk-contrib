@@ -118,7 +118,7 @@ def fetch_newreleases(genre):
 
     return j['searchResponse']['results']
 
-def parse_albums(name, albums, isEditorial=False):
+def parse_albums(name, albums, isEditorial ):
     if albums is None:
         # something went wrong
         return
@@ -164,7 +164,7 @@ def parse_albums(name, albums, isEditorial=False):
 
     _list = nullList + chart_list
     _id = name
-    if isEditorial is True :
+    if isEditorial :
         chart_list = sorted(chart_list, key=itemgetter('rating'))
         _id = "editorial"+_id
 
@@ -194,9 +194,7 @@ def parse_albums(name, albums, isEditorial=False):
     chartCache.newreleases[SOURCE] = metadatas
     chartCache.newreleases[SOURCE+chart_id] = dict(chart)
 
-
-
 if __name__ == '__main__':
     for genre in fetch_genres():
-        parse_albums("%s" %(genre[1]), fetch_newreleases(genre))
-        #parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
+        parse_albums("%s" %(genre[1]), fetch_newreleases(genre), False)
+        parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
