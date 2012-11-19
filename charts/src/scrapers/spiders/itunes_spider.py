@@ -50,7 +50,7 @@ def get_genre(_id):
 def set_genre(_id, name):
     chartCache.storage['itunesgenre_'+_id] = name
 
-#@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
+@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
 def get_music_feeds(countries):
     # { name: country, charts: [], genres: [] }
     music_data = []
@@ -190,7 +190,7 @@ class ItunesSpider(BaseSpider):
         chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
         chart['maxage'] = maxage.seconds 
         chart['source'] = 'itunes'
-        if(_id == settings["ITUNES_DEFAULT_ALBUMCHART"] or _id == settings["ITUNES_DEFAULT_TRACKCHART"]):
+        if _id == settings["ITUNES_DEFAULT_NRCHART"]:
             chart['default'] = 1
 
         return chart
