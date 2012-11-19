@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2011 Hugo Lindström <hugolm84@gmail.com>
+# Copyright (C) 2011-2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -14,44 +14,28 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# !!NOTE: PYTHONPATH to this project basedir need to be set,
+#       Eg. export PYTHONPATH=/path/to/src/
 
-from time import gmtime, strftime
-import urllib2, urllib
-import oauth2 as oauth
-from beaker.cache import CacheManager
-from beaker.util import parse_cache_config_options
+import datetime
+import urllib2
 import json
-import shove
-import sys
-sys.path.append('../scrapers')
-import settings
-from items import ChartItem, SingleItem, slugify
+from scrapers import settings
+from sources.utils import cache as chartCache
+from scrapers.items import ChartItem, slugify
 
-
-cache_opts = {
-    'cache.type': 'file',
-    'cache.data_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/data',
-    'cache.lock_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/lock'
-}
-
-methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources', optimize=False)
-
-@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+@chartCache.methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parse():
-   
-   #http://wearehunted.com/api/chart/<chart type>/<period>/
-   #http://wearehunted.com/api/chart/<chart name>/<chart type>/<period>/
-   #http://wearehunted.com/api/chart/by/<user name>/
-   base = "http://wearehunted.com/api/chart/"
+    
+    #http://wearehunted.com/api/chart/<chart type>/<period>/
+    #http://wearehunted.com/api/chart/<chart name>/<chart type>/<period>/
+    #http://wearehunted.com/api/chart/by/<user name>/
+    base = "http://wearehunted.com/api/chart/"
 
-   
-   charts = [
-     "1",
-     "30"
-   ]
-   
-   genres = [
+    charts = [ "1","30"]
+
+    genres = [
     "rock",
     "pop",
     "folk",
@@ -62,112 +46,116 @@ def parse():
     "rap-hip-hop",
     "twitter",
     "remix"
-   ]
-  
-   types = [
-    "singles",
-    "artists"
-   ]
-   music_data = []
-   
-   for c in charts:
-     if(c == "1"):
-         id = "Emerging"
-     if(c == "30"):
-         id = "Mainstream"
-     for d in types:
-       url = base + d +"/"+c+"/?count=100"
-       req = urllib2.Request(url)
-       response = urllib2.urlopen(req)
-       the_page = response.read()
-       content = the_page.decode('utf-8')
-       j = json.loads(content)
-       
-       type = d
-       if(d == "singles"):
-         type = "tracks"
-       
-       music_data.append( { "type":id+d, "charts": id+d } )
-       source = "wearehunted"
-       chart_id = source+id+d
-       print("Saving %s - %s" %(source, chart_id))
-      
-       list = storage.get(source, {})
+    ]
+    
+    types = [
+    "singles"
+    ]
+    music_data = []
+    
+    today = datetime.datetime.today()
+    expires = today + datetime.timedelta(seconds=settings.GLOBAL_SETTINGS['EXPIRE'])
+    for _id in charts:
+        if(_id == "1"):
+            type_id = "Emerging"
+        if(_id == "30"):
+            type_id = "Mainstream"
+        for _type in types:
+            url = base + _type +"/"+_id+"/?count=100"
+            req = urllib2.Request(url)
+            response = urllib2.urlopen(req)
+            the_page = response.read()
+            content = the_page.decode('utf-8')
+            j = json.loads(content)
+            if(_type == "singles"):
+                _type = "tracks"
 
-       chart_list = []
-       chart_name = "Top "+id
-       chart_type = type[:-1].title() 
+            music_data.append( { "type":type_id+_type, "charts": type_id+_type } )
+            source = "wearehunted"
+            chart_id = source+type_id+_type
+            print("Saving %s - %s" %(source, chart_id))
+            
+            cached_list = chartCache.storage.get(source, {})
 
-       chart = ChartItem()
-       chart['name'] = chart_name
-       chart['source'] = "wearehunted"
-       chart['type'] = chart_type
-       chart['default'] = 1
-       chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
-       chart['id'] = slugify(chart_name)             
-       chart['list'] = j['results']
-       
-       # metadata is the chart item minus the actual list plus a size
-       metadata = {}
-       metadata['id'] = id+d
-       metadata['name'] = chart_name
-       metadata['type'] = chart_type
-       metadata['extra'] = id
-       if( c == "1"):
-          metadata['default'] = 1
-       metadata['source'] = "wearehunted"
-       metadata['size'] = len(j['results'])
-       
-       list[chart_id] = metadata
-       storage[source] = list
-       storage[chart_id] = dict(chart)
-     
-     
-       for e in genres:
-         if( e == "remix" and d == "artists"): 
-            continue
+            #chart_list = []
+            chart_name = "Top "+type_id
+            chart_type = _type[:-1].title()
 
-         url = base + e +"/"+d+"/"+c+"/?count=100"
-         req = urllib2.Request(url)
-         response = urllib2.urlopen(req)
-         the_page = response.read()
-         content = the_page.decode('utf-8')
-         j = json.loads(content)
-       
-        
-         music_data.append( { "type":id+d+e, "charts": id+d+e } )
-         chart_id = source+id+d+e
-         print("Saving %s - %s" %(source, chart_id))
-      
-         list = storage.get(source, {})
+            chart = ChartItem()
+            chart['name'] = chart_name
+            chart['source'] = "wearehunted"
+            chart['type'] = chart_type
+            chart['default'] = 1
+            chart['id'] = slugify(chart_name)
+            chart['list'] = j['results']
+            chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+            # metadata is the chart item minus the actual list plus a size
+            metadata = {}
+            metadata['id'] = type_id+_type
+            metadata['name'] = chart_name
+            metadata['type'] = chart_type
+            metadata['extra'] = type_id
+            if( _id == "1"):
+                metadata['default'] = 1
+            metadata['source'] = "wearehunted"
+            metadata['size'] = len(j['results'])
+            metadata['maxage'] = chart['maxage']
+            metadata['date'] = chart['date']
+            metadata['expires'] = chart['expires']
+            cached_list[chart_id] = metadata
+            chartCache.storage[source] = cached_list
+            chartCache.storage[chart_id] = dict(chart)
 
-         chart_list = []
-         chart_name = "Top "+id+ " in "+ e.title()
-         chart_type = type[:-1].title() 
+            for genre in genres:
+                if( genre == "remix" and _type == "artists"):
+                    continue
 
-         chart = ChartItem()
-         chart['name'] = chart_name
-         chart['source'] = "wearehunted"
-         chart['type'] = chart_type
-         chart['id'] = slugify(chart_name)             
-         chart['list'] = j['results']
-         
-         # metadata is the chart item minus the actual list plus a size
-         metadata = {}
-         metadata['id'] = id+d+e
-         metadata['name'] = chart_name
-         metadata['type'] = chart_type
-         metadata['genre'] = e.title()
-         metadata['extra'] = id
-         metadata['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
-         metadata['source'] = "wearehunted"
-         metadata['size'] = len(j['results'])
-         list[chart_id] = metadata
-         storage[source] = list
-         storage[chart_id] = dict(chart)   
-       
-       
-       
-  
-parse()
+                url = base + genre +"/"+_type+"/"+_id+"/?count=100"
+                print url
+                req = urllib2.Request(url)
+                response = urllib2.urlopen(req)
+                the_page = response.read()
+                content = the_page.decode('utf-8')
+                j = json.loads(content)
 
+
+                music_data.append( { "type":_id+_type+genre, "charts": _id+_type+genre } )
+                chart_id = source+_id+_type+genre
+                print("Saving %s - %s" %(source, chart_id))
+
+                cached_list = chartCache.storage.get(source, {})
+
+                #chart_list = []
+                chart_name = "Top "+type_id+ " in "+ genre.title()
+                chart_type = _type[:-1].title()
+
+                chart = ChartItem()
+                chart['name'] = chart_name
+                chart['source'] = "wearehunted"
+                chart['type'] = chart_type
+                chart['id'] = slugify(chart_name)
+                chart['list'] = j['results']
+                chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+                chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+                chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+
+                # metadata is the chart item minus the actual list plus a size
+                metadata = {}
+                metadata['id'] = type_id+_type+genre
+                metadata['name'] = chart_name
+                metadata['type'] = chart_type
+                metadata['genre'] = genre.title()
+                metadata['extra'] = type_id
+                metadata['maxage'] = chart['maxage']
+                metadata['date'] = chart['date']
+                metadata['expires'] = chart['expires']
+                metadata['source'] = "wearehunted"
+                metadata['size'] = len(j['results'])
+                cached_list[chart_id] = metadata
+                chartCache.storage[source] = cached_list
+                chartCache.storage[chart_id] = dict(chart)
+
+if __name__ == '__main__':
+    parse()
