@@ -4,3 +4,4 @@ shove
 beaker
 httplib2
 scrapy
+python-dateutil
