@@ -16,28 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from time import gmtime, strftime, time
+from time import time
 import datetime
 from operator import itemgetter
 import urllib, urllib2
 import md5
-from beaker.cache import CacheManager
-from beaker.util import parse_cache_config_options
 import json
-import shove
-import sys
-sys.path.append('../scrapers')
-import settings
-from items import ChartItem, SingleItem, slugify
-
-cache_opts = {
-    'cache.type': 'file',
-    'cache.data_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/data',
-    'cache.lock_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/lock'
-}
-
-methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-newrelease_store = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/newreleases', optimize=False)
+from scrapers.items import ChartItem, slugify
+from scrapers import settings
+from sources.utils import cache as chartCache
 
 API_URI = "http://api.rovicorp.com/"
 KEY = "7jxr9zggt45h6rg2n4ss3mrj"
@@ -45,6 +32,7 @@ SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
 MAX_ALBUMS = 50
 SOURCE = "rovi"
+EXPIRES =settings.GLOBAL_SETTINGS['EXPIRE']
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
@@ -67,7 +55,7 @@ def request(method, args, additionalValue=None):
     content = the_page.decode('utf-8')
     return json.loads(content)
 
-@methodcache.cache('fetch_genres', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
 def fetch_genres():
     method = "data/v1/descriptor/musicgenres"
     args = {
@@ -135,7 +123,7 @@ def parse_albums(name, albums, isEditorial=False):
         # something went wrong
         return
 
-    list =  []
+    chart_list =  []
     nullList = []
     for album in albums:
         try:
@@ -149,7 +137,7 @@ def parse_albums(name, albums, isEditorial=False):
             # Note: some albums have Null releaseDate, this doesnt necessarily mean
             # that the release date isnt within our range. We include some of them as well
             if release_date is not None :
-                 list.append (
+                chart_list.append (
                     {'album': title,
                      'artist': artist,
                      'date': release_date,
@@ -163,47 +151,52 @@ def parse_albums(name, albums, isEditorial=False):
                     'rating': rating
                 })
         except :
-             continue
+            continue
 
     if(len(nullList) > MAX_ALBUMS):
         print("Slicing NUllList from %s to %s" %(len(nullList), MAX_ALBUMS))
         nullList = nullList[-MAX_ALBUMS:]
 
-    list = sorted(list, key=itemgetter('date'))
-    if(len(list) > MAX_ALBUMS):
-        print("Slicing list from %s to %s" %(len(list), MAX_ALBUMS))
-        list = list[-MAX_ALBUMS:]
+    chart_list = sorted(chart_list, key=itemgetter('date'))
+    if(len(chart_list) > MAX_ALBUMS):
+        print("Slicing list from %s to %s" %(len(chart_list), MAX_ALBUMS))
+        chart_list = chart_list[-MAX_ALBUMS:]
 
-    list = nullList + list
-    id = name
+    _list = nullList + chart_list
+    _id = name
     if isEditorial is True :
-        list = sorted(list, key=itemgetter('rating'))
-        id = "editorial"+id
+        chart_list = sorted(chart_list, key=itemgetter('rating'))
+        _id = "editorial"+_id
 
-    chart_id = slugify(id)
+    chart_id = slugify(_id)
     chart = ChartItem()
     chart['name'] = name
     chart['source'] = SOURCE
     chart['type'] = "Album"
     chart['default'] = 1
-    chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
     chart['id'] = chart_id
-    chart['list'] = list
-
+    chart['list'] = chart_list
+    
+    today = datetime.datetime.today()
+    expires = today + datetime.timedelta(seconds=EXPIRES)
+    chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    chart['maxage'] = EXPIRES
+    
     # metadata is the chart item minus the actual list plus a size
     metadata_keys = filter(lambda k: k != 'list', chart)
     metadata = { key: chart[key] for key in metadata_keys }
-    metadata['size'] = len(list)
+    metadata['size'] = len(chart_list)
     if isEditorial is True :
-       metadata['extra'] = "Editorial Choices"
-    metadatas = newrelease_store.get(SOURCE, {})
+        metadata['extra'] = "Editorial Choices"
+    metadatas = chartCache.newreleases.get(SOURCE, {})
     metadatas[chart_id] = metadata
-    newrelease_store[SOURCE] = metadatas
-    newrelease_store[SOURCE+chart_id] = dict(chart)
+    chartCache.newreleases[SOURCE] = metadatas
+    chartCache.newreleases[SOURCE+chart_id] = dict(chart)
 
 
 
 if __name__ == '__main__':
     for genre in fetch_genres():
         parse_albums("%s" %(genre[1]), fetch_newreleases(genre))
-        parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
+        #parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
