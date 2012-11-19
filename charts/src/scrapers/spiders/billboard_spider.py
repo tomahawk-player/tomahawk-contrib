@@ -84,13 +84,13 @@ class BillboardSpider(CrawlSpider):
         lower_name = chart_name.lower()
         if chart_type == 'Albums' or 'albums' in lower_name or 'soundtrack' in lower_name:
             chart['type'] = 'Album'
-            chart['typeItem'] = SingleAlbumItem()
+            typeItem = SingleAlbumItem()
         elif chart_type == 'Artists' or 'artists' in lower_name:
             chart['type'] = 'Artist'
-            chart['typeItem'] = SingleArtistItem()
+            typeItem =  SingleArtistItem()
         else:
             chart['type'] = 'Track'
-            chart['typeItem'] = SingleTrackItem()
+            typeItem =  SingleTrackItem()
         
         if(chart['id'] == settings["BILLBOARD_DEFAULT_ALBUMCHART"] or chart['id'] == settings["BILLBOARD_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
@@ -98,18 +98,18 @@ class BillboardSpider(CrawlSpider):
         # ok, we've prepped the chart container, lets start getting the pages
         next_page = next_pages.popleft()
 
-        request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages))
+        request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages, typeItem))
 
         yield request
 
-    def parse_page(self, response, chart, next_pages):
+    def parse_page(self, response, chart, next_pages, typeItem):
         
         hxs = HtmlXPathSelector(response)
 
         # parse every chart entry
         chart_list = []
         for item in hxs.select('//*[@class="printable-row"]'):
-            loader = XPathItemLoader(chart["typeItem"], selector=item)
+            loader = XPathItemLoader(typeItem, selector=item)
             loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
             # ptitle yields the title for the type, so just set the title to whatever the chartype is.
             loader.add_xpath(chart['type'].lower(), 'div/div[@class="ptitle"]/text()')
@@ -128,5 +128,5 @@ class BillboardSpider(CrawlSpider):
             next_page = next_pages.popleft()
             log.msg("Starting nextpage (%s) of %s - %s left" % (next_page, chart['name'], len(next_pages)))
             request = Request('http://www.billboard.com'+next_page,
-                            callback = lambda r: self.parse_page(r, chart, next_pages))
+                            callback = lambda r: self.parse_page(r, chart, next_pages, typeItem))
             yield request

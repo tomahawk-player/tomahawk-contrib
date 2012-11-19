@@ -229,8 +229,9 @@ class ItunesSpider(BaseSpider):
             chart_list.append( dict(item) )
 
         title = feed.xpath('ns:title', namespaces=ns)[0].text
+
         geo = None
-        geo_re = re.compile("cc=(.*)")
+        geo_re = re.compile("cc=([a-zA-Z]+)")
         rGeo =  geo_re.search(_id)
         if rGeo != None:
             geo = rGeo.groups()[0]
@@ -262,10 +263,7 @@ class ItunesSpider(BaseSpider):
         chart['id'] = _id
         chart['origin'] = origin
         chart['genre'] = genre
-        if(geo[3]):
-            chart['geo'] = geo[3]
-        else:
-            chart['geo'] = geo
+        chart['geo'] = geo
         chart['name'] = title
         chart['type'] = _type
         chart['list'] = chart_list
