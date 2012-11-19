@@ -19,7 +19,6 @@
 # local includes
 #
 from resources.charts import charts
-from resources.charts_old import charts_old
 from resources.newreleases import newreleases
 
 #
@@ -40,7 +39,6 @@ class RegexConverter(BaseConverter):
 
 app.url_map.converters['regex'] = RegexConverter
 
-app.register_blueprint(charts_old)
 app.register_blueprint(charts)
 app.register_blueprint(newreleases)
 
