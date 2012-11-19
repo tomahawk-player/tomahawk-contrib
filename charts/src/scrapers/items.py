@@ -26,11 +26,21 @@ def slugify(value):
     value = unicode(_slugify_strip_re.sub('', value).strip().lower())
     return _slugify_hyphenate_re.sub('-', value)
 
-class SingleItem(Item):
+class SingleTrackItem(Item):
     track = Field(input_processor=Strip(), output_processor=TakeFirst())
     artist = Field(input_processor=Strip(), output_processor=TakeFirst())
     album = Field(input_processor=Strip(), output_processor=TakeFirst())
     rank = Field(input_processor=Strip(), output_processor=TakeFirst())
+
+class SingleAlbumItem(Item):
+    artist = Field(input_processor=Strip(), output_processor=TakeFirst())
+    album = Field(input_processor=Strip(), output_processor=TakeFirst())
+    rank = Field(input_processor=Strip(), output_processor=TakeFirst())
+
+class SingleArtistItem(Item):
+    artist = Field(input_processor=Strip(), output_processor=TakeFirst())
+    rank = Field(input_processor=Strip(), output_processor=TakeFirst())
+
 
 class ChartItem(Item):
     name = Field()
@@ -43,5 +53,8 @@ class ChartItem(Item):
     source = Field()
     default = Field()
     date = Field()
+    expires = Field()
+    maxage = Field()
+    extra = Field()
 class ScrapersItem(ChartItem):
     pass
