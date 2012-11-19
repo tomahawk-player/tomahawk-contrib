@@ -29,13 +29,9 @@ URL structure:
 #
 from sources.source import Source
 
-#
 # flask includes
 #
-from flask import Blueprint, Flask, request, session, g, \
-                  redirect, url_for, abort, render_template, \
-                  flash, make_response, jsonify
-from werkzeug.routing import BaseConverter
+from flask import Blueprint, make_response, jsonify
 #
 #system
 #
@@ -64,10 +60,14 @@ def source(id):
     if source is None:
         return make_response("No such source", 404)
     charts = source.chart_list()
+    if  charts is None :
+        return make_response("Source exist, no charts though", 404)
     for chart in charts:
         charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
-
-    return jsonify(charts)
+        
+    resp = jsonify(charts)
+    #Todo: Add cache headers?
+    return resp
 
 @charts.route('/charts/<id>/<regex(".*"):url>')
 def get_chart(id, url):
@@ -78,6 +78,8 @@ def get_chart(id, url):
     chart = source.get_chart(url)
     if chart is None:
         return make_response("No such chart", 404)
+
     resp = jsonify(chart)
+    #Todo: Add cache headers?
     return resp
 
