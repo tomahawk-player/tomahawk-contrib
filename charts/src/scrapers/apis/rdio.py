@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2011 Hugo Lindström <hugolm84@gmail.com>
+# Copyright (C) 2011-2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -14,98 +14,95 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# !!NOTE: PYTHONPATH to this project basedir need to be set,
+#       Eg. export PYTHONPATH=/path/to/src/
 
-from time import gmtime, strftime
+import datetime
 import urllib
 import oauth2 as oauth
-from beaker.cache import CacheManager
-from beaker.util import parse_cache_config_options
 import json
-import shove
-import sys
-sys.path.append('../scrapers')
-import settings
-from items import ChartItem, SingleItem, slugify
+from scrapers import settings
+from sources.utils import cache as chartCache
+from scrapers.items import ChartItem, slugify
 
-cache_opts = {
-    'cache.type': 'file',
-    'cache.data_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/data',
-    'cache.lock_dir': settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/cache/lock'
-}
-
-methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove('file://'+settings.GLOBAL_SETTINGS['OUTPUT_DIR']+'/sources', optimize=False)
-
+@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parseUrls():
-  url = "http://api.rdio.com/1/"
-  consumer = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
-  client = oauth.Client(consumer)
-  
-  # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
-  for c in ["Artist", "Album", "Track"]:
-    parse(client, url, c)
-       
-@methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
-def parse(client, url, c):
-  
+    url = "http://api.rdio.com/1/"
+    consumerKeys = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
+    client = oauth.Client(consumerKeys)
 
-  #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
-  response, contents = client.request(url, 'POST', urllib.urlencode({'method': 'getTopCharts', 'type': c})) 
-  content = contents.decode('utf-8')
-  j = json.loads(content)
-  id = "top"+c
-  
-  source = "rdio"
-  chart_id = source+id
-  print("Saving %s - %s" %(source, chart_id))
+    # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
+    for baseType in ["Artist", "Album", "Track", "Playlist"] :
+        parse(client, url, baseType)
 
-  list = storage.get(source, {})
-  
-  chart_list = []
-  chart_name = "Top Overall"
-  chart_type = c.title() 
+def parse(client, url, baseType):
+    #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
+    today = datetime.datetime.today()
+    expires = today + datetime.timedelta(seconds=settings.GLOBAL_SETTINGS['EXPIRE'])
 
-  chart = ChartItem()
-  chart['name'] = chart_name
-  chart['source'] = "rdio"
-  chart['type'] = chart_type
-  chart['id'] = slugify(chart_name)
-  chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+    response, contents = client.request(url, 'POST', urllib.urlencode({'method': 'getTopCharts', 'type': baseType})) 
+    if( response['status'] !=  '200' ) :
+        print "Error " + response['status']
+    else :
+        content = contents.decode('utf-8')
+        jsonContent = json.loads(content)
 
-  x = []
-  i = 1
-  for items in j['result']:
-    t = {}
-    rank = i
-    i += 1
-    if( c == "Artist"):
-      t["artist"] = items.pop("name")
-    else:
-      t['artist'] = items.pop("artist")
-    if( c == "Track"):
-      t["track"] = items.pop("name")
-    if( c == "Album"):
-      t["album"] = items.pop("name")
-      
-    t["rank"] = rank
-    x.append(t)
-    
-  chart['list'] = x
-    
-  # metadata is the chart item minus the actual list plus a size
-  metadata_keys = filter(lambda k: k != 'result', j.keys())
-  metadata = { key: j[key] for key in metadata_keys }
-  metadata['id'] = id
-  metadata['name'] = "Top Overall"
-  metadata['type'] = c
-  metadata['source'] = "rdio"
-  metadata['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
-  if( c == "Track"):
-    metadata['default'] = 1
-    
-  metadata['size'] = len(j['result'])
-  list[chart_id] = metadata
-  storage[source] = list
-  storage[chart_id] = dict(chart)
+        # TODO: Playlist charts
+        if( baseType == "Playlist"):
+            print "Playlist not implemented"
+        else :
+            type_id = "top"+baseType
+            source = "rdio"
+            chart_id = source+type_id
+            print("Saving %s - %s" %(source, chart_id))
 
-parseUrls()
+            cached_list = chartCache.storage.get(source, {})
+            chart_list = []
+            chart_name = "Top Overall"
+            chart_type = baseType.title() 
+
+            chart = ChartItem()
+            chart['name'] = chart_name
+            chart['source'] = source
+            chart['type'] = chart_type
+            chart['id'] = slugify(chart_name)
+            chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+
+            rank = 0
+            for items in jsonContent['result'] :
+                t = {}
+                rank += 1
+                if( baseType == "Artist"):
+                    t["artist"] = items.pop("name")
+                else:
+                    t['artist'] = items.pop("artist")
+                    t[baseType.lower()] = items.pop("name")
+                t["rank"] = rank 
+                chart_list.append(t)
+
+            chart['list'] = chart_list
+
+            # metadata is the chart item minus the actual list plus a size
+            metadata_keys = filter(lambda k: k != 'result', jsonContent.keys())
+            metadata = { key: jsonContent[key] for key in metadata_keys }
+            metadata['id'] = type_id
+            metadata['name'] = "Top Overall"
+            metadata['type'] = baseType
+            metadata['source'] = source
+            metadata['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+            metadata['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            metadata['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+
+            if( baseType == "Track") :
+                metadata['default'] = 1
+
+            metadata['size'] = len(jsonContent['result'])
+            cached_list[chart_id] = metadata
+            chartCache.storage[source] = cached_list
+            chartCache.storage[chart_id] = dict(chart)
+
+if __name__ == '__main__':
+    parseUrls()
