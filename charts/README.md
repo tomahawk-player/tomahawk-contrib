@@ -58,6 +58,9 @@ directory you choose. Setting it up is easy, though outside the scope of this
 doc. Google 'python virtualenv pip' or read this page
 http://jontourage.com/2011/02/09/virtualenv-pip-basics/
 
+Setting your PYTHONPATH to point to this project will also make things easier.
+export PYTHONPATH=/path/to/src
+
 Install dependencies:
 
     pip install -U -r requirements.txt
