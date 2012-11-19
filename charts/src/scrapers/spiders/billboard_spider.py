@@ -1,4 +1,23 @@
-from time import gmtime, strftime
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (C) 2012 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import datetime
+import dateutil.relativedelta as reldate
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -6,10 +25,11 @@ from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
 from scrapy import log
-
-from scrapers.items import ChartItem, SingleItem, slugify
-
+from scrapers.items import ChartItem, SingleTrackItem, SingleAlbumItem, SingleArtistItem, slugify
 from collections import deque
+
+EXPIRES_DAY = 3 #Thursday
+EXPIRES_HOUR = 13 # After noon, 12pm Pacific 
 
 class BillboardSpider(CrawlSpider):
     name = "billboard.com"
@@ -31,7 +51,6 @@ class BillboardSpider(CrawlSpider):
     ]
 
     def parse_chart(self, response):
-      
         hxs = HtmlXPathSelector(response)
 
         chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0].strip()
@@ -51,26 +70,28 @@ class BillboardSpider(CrawlSpider):
         chart['origin'] = response.url
         chart['source'] = 'billboard'
         chart['id'] = slugify(chart_name)
-        chart['date'] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+        today = datetime.datetime.today()
+        rd=reldate.relativedelta(weekday=reldate.TH(+1),hours=+21)
+        rd2=reldate.relativedelta(hour=13,minute=0,second=0,microsecond=0)
+        expires = today+rd+rd2
+        chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
+        chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+        maxage = expires-today
+        chart['maxage'] = maxage.seconds
         chart['list'] = []
 
         # lets figure out the content type
         lower_name = chart_name.lower()
-        if chart_type == 'Albums':
+        if chart_type == 'Albums' or 'albums' in lower_name or 'soundtrack' in lower_name:
             chart['type'] = 'Album'
-        elif chart_type == 'Artists':
-            chart['type'] = 'Artist'    
-        elif chart_type == 'Singles':
-            chart['type'] = 'Track'
-        elif 'albums' in lower_name:
-            chart['type'] = 'Album'
-        elif 'artists' in lower_name:
-            chart['type'] = 'Artist'    
-        elif 'soundtrack' in lower_name:
-            chart['type'] = 'Album'
+            chart['typeItem'] = SingleAlbumItem()
+        elif chart_type == 'Artists' or 'artists' in lower_name:
+            chart['type'] = 'Artist'
+            chart['typeItem'] = SingleArtistItem()
         else:
             chart['type'] = 'Track'
-
+            chart['typeItem'] = SingleTrackItem()
+        
         if(chart['id'] == settings["BILLBOARD_DEFAULT_ALBUMCHART"] or chart['id'] == settings["BILLBOARD_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
 
@@ -86,9 +107,9 @@ class BillboardSpider(CrawlSpider):
         hxs = HtmlXPathSelector(response)
 
         # parse every chart entry
-        list = []
+        chart_list = []
         for item in hxs.select('//*[@class="printable-row"]'):
-            loader = XPathItemLoader(SingleItem(), selector=item)
+            loader = XPathItemLoader(chart["typeItem"], selector=item)
             loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
             # ptitle yields the title for the type, so just set the title to whatever the chartype is.
             loader.add_xpath(chart['type'].lower(), 'div/div[@class="ptitle"]/text()')
@@ -96,9 +117,9 @@ class BillboardSpider(CrawlSpider):
             loader.add_xpath('album', 'div/div[@class="palbum"]/text()')
 
             single = loader.load_item()
-            list.append(dict(single))
+            chart_list.append(dict(single))
             
-        chart['list'] += list
+        chart['list'] += chart_list
 
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
