@@ -23,11 +23,11 @@ class Source(object):
     def chart_list(self):
         return cache.storage.get(self.name)
 
-    def get_chart(self, id):
-        return cache.storage.get(self.name+id, None)
+    def get_chart(self, chart_id):
+        return cache.storage.get(self.name+chart_id, None)
 
     def newreleases_list(self):
         return cache.newreleases.get(self.name)
 
-    def get_newreleases(self, id):
-        return cache.newreleases.get(self.name+id, None)
+    def get_newreleases(self, chart_id):
+        return cache.newreleases.get(self.name+chart_id, None)
