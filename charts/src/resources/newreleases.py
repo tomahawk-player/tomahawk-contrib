@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (C) 2012 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -24,49 +25,49 @@ URL structure:
 /newreleases/<name>/<id> : chart data for source
 """
 
-#
 # local includes
 #
 from sources.source import Source
-
-#
 # flask includes
 #
-from flask import Blueprint, Flask, request, session, g, \
-                  redirect, url_for, abort, render_template, \
-                  flash, make_response, jsonify
-from werkzeug.routing import BaseConverter
-#
+from flask import Blueprint, make_response, jsonify, request
 #system
 #
 import urllib
 from pkg_resources import parse_version
-newreleases = Blueprint('newreleases', __name__)
 
 ## Routes and Handlers ##
+newreleases = Blueprint('newreleases', __name__)
+generic_sources = ['rovi', 'itunes']
 
-generic_sources = ['rovi']
-
-sources = { source: Source(source) for source in generic_sources }
+# pre 0.5.99 rovi is the only available source
+# Check version from tomakawk, itunes didnt make it pre 0.5.99
+def getSources(request):
+    version = str(request.args.get('version'))
+    if version is None or parse_version('0.5.99') > parse_version(version) :
+        sources = { 'rovi': Source('rovi') }
+    else :
+        sources = { source: Source(source) for source in generic_sources }
+    return sources
 
 @newreleases.route('/newreleases')
 def welcome():
     return jsonify(
         {
-            'sources': sources.keys(),
+            'sources': getSources(request).keys(),
             'prefix': '/newreleases/'
         }
     )
 
 @newreleases.route('/newreleases/<id>')
 def source(id):
-    source = sources.get(id, None)
+    source = getSources(request).get(id, None)
     if source is None:
         return make_response("No such source", 404)
     newreleases = source.newreleases_list()
     if newreleases is None:
         return make_response("No new releases", 404)
-    # Check version from tomakawk, editorials didnt make it to 0.5.5
+    # Check version from tomakawk, editorials didnt make it to pre 0.5.99
     version = request.args.get("version")
     if version is None or parse_version('0.5.99') > parse_version(version) :
         metadata_keys = filter(lambda k: not "editorial" in k, newreleases)
@@ -78,7 +79,7 @@ def source(id):
 
 @newreleases.route('/newreleases/<id>/<regex(".*"):url>')
 def get_nr(id, url):
-    source = sources.get(id, None)
+    source = getSources(request).get(id, None)
     if source is None:
         return make_response("No such source", 404)
     url = urllib.unquote_plus(url)
