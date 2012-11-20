@@ -52,8 +52,9 @@ them back with the same key.
     sudo zypper install python-pip
 ### PYTHONPATH
 Setting up your PYTHONPATH to point to this project will also make things easier, and some api scrapers depend on it.
-		export PYTHONPATH=/path/to/src
-				
+    
+    export PYTHONPATH=/path/to/src
+    				
 To avoid polluting your system with python packages, it is recommended you use
 `virtualenv`. This is a tool which creates a virtual python env in any
 directory you choose. Setting it up is easy, though outside the scope of this
@@ -62,10 +63,15 @@ http://jontourage.com/2011/02/09/virtualenv-pip-basics/
 
 ### Install dependencies:
 If you don't have it already, install python devel
-	sudo apt-get install build-essentials python-dev
+
+    sudo apt-get install build-essentials python-dev
+
 If you have problems installing libxml
+
 	sudo apt-get install libxml2-dev libxslt-dev
+
 And then the requirements    
+
 	pip install -U -r requirements.txt
 
 [flask]: http://flask.pocoo.org/
