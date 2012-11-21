@@ -65,9 +65,11 @@ def source(id):
     for chart in charts:
         charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
         
-    resp = jsonify(charts)
-    #Todo: Add cache headers?
-    return resp
+    response = make_response(jsonify(charts))
+    cacheControl = source.get_cacheControl(isChart = True)
+    for key in cacheControl.keys() :
+        response.headers.add(key, cacheControl[key])
+    return response
 
 @charts.route('/charts/<id>/<regex(".*"):url>')
 def get_chart(id, url):
@@ -79,7 +81,9 @@ def get_chart(id, url):
     if chart is None:
         return make_response("No such chart", 404)
 
-    resp = jsonify(chart)
-    #Todo: Add cache headers?
-    return resp
+    response = make_response(jsonify(chart))
+    cacheControl = source.get_cacheControl(isChart = True)
+    for key in cacheControl.keys() :
+        response.headers.add(key, cacheControl[key])
+    return response
 

@@ -30,12 +30,11 @@ URL structure:
 from sources.source import Source
 # flask includes
 #
-from flask import Blueprint, make_response, jsonify, request
+from flask import Blueprint, make_response, jsonify, request, Response
 #system
 #
 import urllib
 from pkg_resources import parse_version
-
 ## Routes and Handlers ##
 newreleases = Blueprint('newreleases', __name__)
 generic_sources = ['rovi', 'itunes']
@@ -75,7 +74,10 @@ def source(id):
     for nr in newreleases:
         newreleases[nr]['link'] = "/newreleases/%s/%s" %(id, newreleases[nr]['id'])
 
-    return jsonify(newreleases)
+    response = make_response(jsonify(newreleases))
+    for key in source.get_cacheControl().keys() :
+        response.headers.add(key, source.get_cacheControl()[key])
+    return response
 
 @newreleases.route('/newreleases/<id>/<regex(".*"):url>')
 def get_nr(id, url):
@@ -83,9 +85,12 @@ def get_nr(id, url):
     if source is None:
         return make_response("No such source", 404)
     url = urllib.unquote_plus(url)
-    nr = source.get_newreleases(url)
-    if nr is None:
+    newrelease = source.get_newreleases(url)
+    if newrelease is None:
         return make_response("No such new release", 404)
-    resp = jsonify(nr)
-    return resp
+
+    response = make_response(jsonify(newrelease))
+    for key in source.get_cacheControl().keys() :
+        response.headers.add(key, source.get_cacheControl()[key])
+    return response
 
