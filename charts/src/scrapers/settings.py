@@ -12,7 +12,7 @@ BOT_VERSION = '1.0'
 try:
     BASEDIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    BASEDIR = '/home/charts/cache'
+    BASEDIR = '/Users/hugo/cache'
 
 SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'
@@ -39,4 +39,4 @@ ITUNES_DEFAULT_TRACKCHART = "d6580786e2de5e1229e68d444dd62d8f"
 ITUNES_DEFAULT_NRCHART = "084b7063d1914bf4393c3502691b4ace" # ALternative US Featured
 ITUNES_DEFAULT_COUNTRY = "us"
 
-GLOBAL_SETTINGS = {'OUTPUT_DIR': OUTPUT_DIR, 'EXPIRE' : 7200}
+GLOBAL_SETTINGS = {'OUTPUT_DIR': OUTPUT_DIR, 'EXPIRE' : 86400} # One day
