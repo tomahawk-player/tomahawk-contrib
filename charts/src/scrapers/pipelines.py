@@ -4,7 +4,7 @@
 # See: http://doc.scrapy.org/topics/item-pipeline.html
 from scrapy.exceptions import DropItem
 from scrapy import log
-
+import datetime
 from sources.utils import cache as chartCache
 
 class ScrapersPipeline(object):
@@ -46,4 +46,5 @@ class ScrapersPipeline(object):
         chart_list[chart_id] = metadata
         self.storage[source] = chart_list
         self.storage[chart_id] = dict(item)
+        self.storage[source+"cacheControl"] = dict(chartCache.setCacheControl(item["maxage"]))
         return item

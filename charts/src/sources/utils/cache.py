@@ -1,4 +1,5 @@
 # Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -25,7 +26,7 @@ import os
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    OUTPUT_DIR = '/home/charts/cache'
+    OUTPUT_DIR = '/Users/hugo/cache'
 
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
@@ -37,6 +38,16 @@ cache_opts = {
     'cache.data_dir': OUTPUT_DIR+'/cache/data',
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
+
+def setCacheControl(expiresInSeconds):
+    today = datetime.datetime.today()
+    expires = today + datetime.timedelta(seconds=expiresInSeconds)
+    return {
+            "Expires" : (expires - datetime.datetime(1970,1,1)).total_seconds(),
+            "Max-Age" : expiresInSeconds,
+            "Date-Modified" : today.strftime("%a, %d %b %Y %H:%M:%S +0000"),
+            "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+           }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 

@@ -29,5 +29,11 @@ class Source(object):
     def newreleases_list(self):
         return cache.newreleases.get(self.name)
 
+    def get_cacheControl(self, isChart = False):
+        if isChart is True :
+            return cache.storage.get(self.name+"cacheControl", None)
+        else :
+            return cache.newreleases.get(self.name+"cacheControl", None)
+
     def get_newreleases(self, chart_id):
         return cache.newreleases.get(self.name+chart_id, None)
