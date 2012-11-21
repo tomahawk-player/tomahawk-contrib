@@ -57,7 +57,7 @@ def request(method, args, additionalValue=None):
     except Exception :
         return {}
 
-#@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
+@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
 def fetch_genres():
     method = "data/v1/descriptor/musicgenres"
     args = {

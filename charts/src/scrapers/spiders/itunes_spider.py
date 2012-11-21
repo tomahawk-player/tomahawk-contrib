@@ -38,7 +38,7 @@ from sources.utils import cache as chartCache
 generator_url = 'http://itunes.apple.com/rss/generator/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
-#@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
+@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
 def get_countries():
     doc = lxml.html.parse(generator_url)
     countries = [c.attrib['value'] for c in doc.xpath("//select[@id='feedCountry']/option")]
