@@ -37,7 +37,7 @@ import urllib
 from pkg_resources import parse_version
 ## Routes and Handlers ##
 newreleases = Blueprint('newreleases', __name__)
-generic_sources = ['rovi', 'itunes']
+generic_sources = ['rovi', "itunes"]
 
 # pre 0.5.99 rovi is the only available source
 # Check version from tomakawk, itunes didnt make it pre 0.5.99
@@ -51,12 +51,19 @@ def getSources(request):
 
 @newreleases.route('/newreleases')
 def welcome():
-    return jsonify(
+    jsonContent = jsonify(
         {
             'sources': getSources(request).keys(),
             'prefix': '/newreleases/'
         }
     )
+    response = make_response(jsonContent)
+    try:
+        for sourceName in getSources(request).keys() :
+            response.headers.add(sourceName + "Expires", int(getSources(request).get(sourceName, None).get_cacheControl()["Expires"]))
+    except Exception :
+        print "Cache Error"
+    return response
 
 @newreleases.route('/newreleases/<id>')
 def source(id):

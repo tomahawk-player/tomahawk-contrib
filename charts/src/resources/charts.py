@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (C) 2012 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -47,13 +48,19 @@ sources = { source: Source(source) for source in generic_sources }
 
 @charts.route('/charts')
 def welcome():
-    return jsonify(
+    response = make_response( jsonify(
         {
             'sources': sources.keys(),
             'prefix': '/charts/'
         }
-    )
-
+    ))
+    for sourceName in sources.keys() :
+        try :
+            response.headers.add(sourceName + 'Expires', sources.get(sourceName, None).get_cacheControl(isChart = True)['Expires'])
+        except Exception: 
+            print "Cache Error"
+    return response
+       
 @charts.route('/charts/<id>')
 def source(id):
     source = sources.get(id, None)
