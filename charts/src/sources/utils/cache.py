@@ -1,5 +1,4 @@
 # Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
-# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -23,6 +22,8 @@ from beaker.util import parse_cache_config_options
 import shove
 import os
 
+from datetime import datetime, timedelta
+
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
 except KeyError:
@@ -39,12 +40,17 @@ cache_opts = {
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
 
+def totimestamp(dt, epoch=datetime(1970,1,1)):
+    td = dt - epoch
+    #return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6 
+    return td.total_seconds()
+
 def setCacheControl(expiresInSeconds):
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=expiresInSeconds)
+    today = datetime.utcnow()
+    expires = today + timedelta(seconds=expiresInSeconds)
     return {
-            "Expires" : (expires - datetime.datetime(1970,1,1)).total_seconds(),
-            "Max-Age" : expiresInSeconds,
+            "Expires" : int((expires - datetime.utcfromtimestamp(0)).total_seconds()),
+            "Max-Age" : int(expiresInSeconds),
             "Date-Modified" : today.strftime("%a, %d %b %Y %H:%M:%S +0000"),
             "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
            }
