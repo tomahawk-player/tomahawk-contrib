@@ -18,7 +18,6 @@
 # !!NOTE: PYTHONPATH to this project basedir need to be set,
 #       Eg. export PYTHONPATH=/path/to/src/
 
-import datetime
 import urllib
 import oauth2 as oauth
 import json
@@ -26,8 +25,9 @@ from scrapers import settings
 from sources.utils import cache as chartCache
 from scrapers.items import ChartItem, slugify
 
-@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parseUrls():
+
     url = "http://api.rdio.com/1/"
     consumerKeys = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
     client = oauth.Client(consumerKeys)
@@ -38,9 +38,6 @@ def parseUrls():
 
 def parse(client, url, baseType):
     #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=settings.GLOBAL_SETTINGS['EXPIRE'])
-
     response, contents = client.request(url, 'POST', urllib.urlencode({'method': 'getTopCharts', 'type': baseType})) 
     if( response['status'] !=  '200' ) :
         print "Error " + response['status']
@@ -67,9 +64,10 @@ def parse(client, url, baseType):
             chart['source'] = source
             chart['type'] = chart_type
             chart['id'] = slugify(chart_name)
-            chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-            chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-            chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+            cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+            chart['date'] = cacheControl.get("Date-Modified")
+            chart['expires'] = cacheControl.get("Date-Expires")
+            chart['maxage'] = cacheControl.get("Max-Age")
 
             rank = 0
             for items in jsonContent['result'] :
@@ -92,9 +90,9 @@ def parse(client, url, baseType):
             metadata['name'] = "Top Overall"
             metadata['type'] = baseType
             metadata['source'] = source
-            metadata['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
-            metadata['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-            metadata['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+            metadata['date'] = cacheControl.get("Date-Modified")
+            metadata['expires'] = cacheControl.get("Date-Expires")
+            metadata['maxage'] = cacheControl.get("Max-Age")
 
             if( baseType == "Track") :
                 metadata['default'] = 1
@@ -103,6 +101,7 @@ def parse(client, url, baseType):
             cached_list[chart_id] = metadata
             chartCache.storage[source] = cached_list
             chartCache.storage[chart_id] = dict(chart)
+            chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 
 if __name__ == '__main__':
     parseUrls()

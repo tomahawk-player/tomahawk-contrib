@@ -18,14 +18,13 @@
 # !!NOTE: PYTHONPATH to this project basedir need to be set,
 #       Eg. export PYTHONPATH=/path/to/src/
 
-import datetime
 import urllib2
 import json
 from scrapers import settings
 from sources.utils import cache as chartCache
 from scrapers.items import ChartItem, slugify
 
-@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parseUrls():
     url = "http://ex.fm/api/v3/"
     for baseType in ["explore", "trending"] :
@@ -41,8 +40,6 @@ def parse(type_id, url, extra):
     response = urllib2.urlopen(request)
     content = response.read().decode('utf-8')
     jsonContent = json.loads(content)
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=settings.GLOBAL_SETTINGS['EXPIRE'])
 
     chart_list = []
     source = "ex.fm"
@@ -62,9 +59,12 @@ def parse(type_id, url, extra):
     chart['source'] = source
     chart['type'] = chart_type
     chart['default'] = 1
-    chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-    chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-    chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+
+    cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+    chart['date'] = cacheControl.get("Date-Modified")
+    chart['expires'] = cacheControl.get("Date-Expires")
+    chart['maxage'] = cacheControl.get("Max-Age")
+
     chart['id'] = slugify(chart_name)
     if( extra != None ) :
         chart['genre'] = extra.title()
@@ -93,6 +93,6 @@ def parse(type_id, url, extra):
     metadatas[chart_id] = metadata
     chartCache.storage[source] = metadatas
     chartCache.storage[source+chart_id] = dict(chart)
-            
+    chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 if __name__ == '__main__':
     parseUrls()

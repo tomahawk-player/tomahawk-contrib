@@ -50,14 +50,20 @@ def get_genre(_id):
 def set_genre(_id, name):
     chartCache.storage['itunesgenre_'+_id] = name
 
-@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
+def get_maxAge() :
+    today = datetime.datetime.today()
+    expires = datetime.datetime.replace(today +  datetime.timedelta(days=1),hour=1, minute=0, second=0)
+    maxage = expires-today
+    return maxage.seconds
+
+#@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
 def get_music_feeds(countries):
     # { name: country, charts: [], genres: [] }
     music_data = []
     for cc in countries:
         url = available_url % (cc)
         data = urllib2.urlopen(url).read()
-
+        
         # the response has a jsonp callback, lets remove that
         data = data.replace("availableFeeds=", "")
         j = json.loads(data)
@@ -70,7 +76,7 @@ def get_music_feeds(countries):
             genres = [ (g['value'], g['display'] ) for g in cat['genres']['list'] ]
             for g in genres:
                 set_genre(g[0], g[1])
-
+            
             # returns a list of tuples, where each tuple
             # contains:
             # url suffix (e.g., 'xml')
@@ -80,7 +86,7 @@ def get_music_feeds(countries):
             # cc is the country id
             charts = [ (c['urlSuffix'], c['urlPrefix'], c['name'], c['display']) for c in cat['types']['list'] ]
             music_data.append( { "country":c, "charts": charts, "genres": genres, "cc" : cc } )
-
+    
     return music_data
 
 def construct_feeds(music_feeds, limit):
@@ -104,7 +110,7 @@ def get_feed_urls(limit):
     feeds = construct_feeds(get_music_feeds(get_countries()), limit)
     #if rss:
     #    return feeds
-    #feeds = filter(lambda url: not 'rss.xml' in url, feeds)
+    #feeds = filter(lambda url: 'SE' in url, feeds)
     return feeds
 
 class ItunesSpider(BaseSpider):
@@ -117,12 +123,12 @@ class ItunesSpider(BaseSpider):
         except etree.XMLSyntaxError:
             log.msg("Parse error, skipping: %s"%(response.url), loglevel=log.WARNING)
             return None
-
+        
         if feed.tag == '{http://www.w3.org/2005/Atom}feed':
             return self.parse_atom(feed)
         elif feed.tag == 'rss':
             return self.parse_rss(feed, response.url)
-
+    
     # Itunes is weird, but that we know. There's sometimes no information about this feed
     # in the response, so we need to construct Title and so forth
     # Also, its sometimes b0rked description filled with bs json
@@ -142,17 +148,17 @@ class ItunesSpider(BaseSpider):
                 geo = rGeo.groups()[0]
         except IndexError :
             return
-
+        
         if 'newreleases' in url :
             feed_extra = "New Releases"
         if 'justadded' in url :
             feed_extra = "Just Added"
         if 'featuredalbums' in url:
             feed_extra = "Featured"
-
+        
         if feed_extra is None or genre_name is None or geo is None :
             return
-
+        
         ns = { 'itms': 'http://phobos.apple.com/rss/1.0/modules/itms/' }
         entries = feed.xpath('.//channel/item')
         rank = 0
@@ -166,12 +172,8 @@ class ItunesSpider(BaseSpider):
             item['album'] = album
             item['rank'] = rank
             chart_list.append( dict(item) )
-
+        
         chart = ChartItem()
-        # Let Itunes expire tomorrow at 00am ( though it seems it updates every 5min )
-        today = datetime.datetime.today()
-        expires = datetime.datetime.replace(today +  datetime.timedelta(days=1),hour=1, minute=0, second=0)
-        maxage = expires-today
         # Unique ids
         _id = url
         md5 = hashlib.md5()
@@ -186,28 +188,31 @@ class ItunesSpider(BaseSpider):
         chart['extra'] = feed_extra
         chart['type'] = feed_type
         chart['list'] = chart_list
-        chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['maxage'] = maxage.seconds 
         chart['source'] = 'itunes'
+        # maxage is the last item scraped
+        cacheControl = chartCache.setCacheControl(get_maxAge())
+        chart['date'] = cacheControl.get("Date-Modified")
+        chart['expires'] = cacheControl.get("Date-Expires")
+        chart['maxage'] = cacheControl.get("Max-Age")
+        
         if _id == settings["ITUNES_DEFAULT_NRCHART"]:
             chart['default'] = 1
-
+        
         return chart
-
+    
     def parse_atom(self, feed):
         ns = {'ns': 'http://www.w3.org/2005/Atom',
-              'im': 'http://itunes.apple.com/rss'}
-              
+            'im': 'http://itunes.apple.com/rss'}
+        
         try:
             _id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
             _type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
         except IndexError:
             return
-
+        
         if _type != "Album" and _type != "Track":
             return # skip playlists
-
+        
         entries = feed.xpath('/ns:feed/ns:entry', namespaces=ns)
         chart_list = []
         rank = 0
@@ -227,39 +232,35 @@ class ItunesSpider(BaseSpider):
             item['album'] = album
             item['rank'] = rank
             chart_list.append( dict(item) )
-
+        
         title = feed.xpath('ns:title', namespaces=ns)[0].text
-
+        
         geo = None
         geo_re = re.compile("cc=([a-zA-Z]+)")
         rGeo =  geo_re.search(_id)
         if rGeo != None:
             geo = rGeo.groups()[0]
-
+        
         genre = None
         genre_re = re.compile("genre=(\d+)/")
         rGenre =  genre_re.search(_id)
         if rGenre != None:
             genre = rGenre.groups()[0]
-
+        
         if not genre is None:
             genre = get_genre(genre)
-
+        
         origin = _id
         md5 = hashlib.md5()
         md5.update(_id)
         _id = md5.hexdigest()
-
+        
         if geo is None:
             geo_s = origin.split("/")
             geo = geo_s
-
+        
         chart = ChartItem()
         # Itunes expires tomorrow at 00am
-        today = datetime.datetime.today()
-        expires = datetime.datetime.replace(today +  datetime.timedelta(days=1),hour=1, minute=0, second=0)
-        maxage = expires-today
-        
         chart['id'] = _id
         chart['origin'] = origin
         chart['genre'] = genre
@@ -267,11 +268,15 @@ class ItunesSpider(BaseSpider):
         chart['name'] = title
         chart['type'] = _type
         chart['list'] = chart_list
-        chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['maxage'] = maxage.seconds 
         chart['source'] = 'itunes'
+        
+        # maxage is the last item scraped
+        cacheControl = chartCache.setCacheControl(get_maxAge())
+        chart['date'] = cacheControl.get("Date-Modified")
+        chart['expires'] = cacheControl.get("Date-Expires")
+        chart['maxage'] = cacheControl.get("Max-Age")
+        
         if(_id == settings["ITUNES_DEFAULT_ALBUMCHART"] or _id == settings["ITUNES_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
-
+        
         return chart

@@ -18,7 +18,6 @@
 # !!NOTE: PYTHONPATH to this project basedir need to be set,
 #       Eg. export PYTHONPATH=/path/to/src/
 
-import datetime
 import urllib2
 import json
 from scrapers import settings
@@ -52,9 +51,6 @@ def parse():
     "singles"
     ]
     music_data = []
-    
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=settings.GLOBAL_SETTINGS['EXPIRE'])
     for _id in charts:
         if(_id == "1"):
             type_id = "Emerging"
@@ -88,9 +84,10 @@ def parse():
             chart['default'] = 1
             chart['id'] = slugify(chart_name)
             chart['list'] = j['results']
-            chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-            chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-            chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+            cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+            chart['date'] = cacheControl.get("Date-Modified")
+            chart['expires'] = cacheControl.get("Date-Expires")
+            chart['maxage'] = cacheControl.get("Max-Age")
             # metadata is the chart item minus the actual list plus a size
             metadata = {}
             metadata['id'] = type_id+_type
@@ -101,12 +98,14 @@ def parse():
                 metadata['default'] = 1
             metadata['source'] = "wearehunted"
             metadata['size'] = len(j['results'])
-            metadata['maxage'] = chart['maxage']
-            metadata['date'] = chart['date']
-            metadata['expires'] = chart['expires']
+            metadata['date'] = cacheControl.get("Date-Modified")
+            metadata['expires'] = cacheControl.get("Date-Expires")
+            metadata['maxage'] = cacheControl.get("Max-Age")
+
             cached_list[chart_id] = metadata
             chartCache.storage[source] = cached_list
             chartCache.storage[chart_id] = dict(chart)
+            chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 
             for genre in genres:
                 if( genre == "remix" and _type == "artists"):
@@ -137,9 +136,9 @@ def parse():
                 chart['type'] = chart_type
                 chart['id'] = slugify(chart_name)
                 chart['list'] = j['results']
-                chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-                chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-                chart['maxage'] = settings.GLOBAL_SETTINGS['EXPIRE']
+                chart['date'] = cacheControl.get("Date-Modified")
+                chart['expires'] = cacheControl.get("Date-Expires")
+                chart['maxage'] = cacheControl.get("Max-Age")
 
                 # metadata is the chart item minus the actual list plus a size
                 metadata = {}
@@ -148,14 +147,15 @@ def parse():
                 metadata['type'] = chart_type
                 metadata['genre'] = genre.title()
                 metadata['extra'] = type_id
-                metadata['maxage'] = chart['maxage']
-                metadata['date'] = chart['date']
-                metadata['expires'] = chart['expires']
+                metadata['date'] = cacheControl.get("Date-Modified")
+                metadata['expires'] = cacheControl.get("Date-Expires")
+                metadata['maxage'] = cacheControl.get("Max-Age")
                 metadata['source'] = "wearehunted"
                 metadata['size'] = len(j['results'])
                 cached_list[chart_id] = metadata
                 chartCache.storage[source] = cached_list
                 chartCache.storage[chart_id] = dict(chart)
+                chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 
 if __name__ == '__main__':
     parse()

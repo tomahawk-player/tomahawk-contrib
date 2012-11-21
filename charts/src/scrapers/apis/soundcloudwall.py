@@ -58,8 +58,6 @@ def parseUrl(url, title, default):
     the_page = response.read()
     content = the_page.decode('utf-8')
     jsonContent = json.loads(content)
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=31556926)
 
     if( len(jsonContent) != 0 ):
 
@@ -78,9 +76,10 @@ def parseUrl(url, title, default):
         chart['source'] = source
         chart['type'] = chart_type
         chart['default'] = default
-        chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['maxage'] = EXPIRES
+        cacheControl = chartCache.setCacheControl(EXPIRES)
+        chart['date'] = cacheControl.get("Date-Modified")
+        chart['expires'] = cacheControl.get("Date-Expires")
+        chart['maxage'] = cacheControl.get("Max-Age")
         chart['id'] = slugify(chart_name)
 
         rank = 0
@@ -130,6 +129,7 @@ def parseUrl(url, title, default):
             metadatas[chart_id] = metadata
             chartCache.storage[source] = metadatas
             chartCache.storage[chart_id] = dict(chart)
+            chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 
 if __name__ == '__main__':
     createUrl()

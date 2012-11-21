@@ -27,6 +27,7 @@ from scrapy.http import Request
 from scrapy import log
 from scrapers.items import ChartItem, SingleTrackItem, SingleAlbumItem, SingleArtistItem, slugify
 from collections import deque
+from sources.utils import cache as chartCache
 
 EXPIRES_DAY = 3 #Thursday
 EXPIRES_HOUR = 13 # After noon, 12pm Pacific 
@@ -50,6 +51,14 @@ class BillboardSpider(CrawlSpider):
         Rule(SgmlLinkExtractor(allow=['/charts/\w+'], restrict_xpaths=chart_xpath), callback='parse_chart', follow=True)
     ]
 
+    def get_maxAge(self) :
+        today = datetime.datetime.today()
+        rd=reldate.relativedelta(weekday=reldate.TH(+1),hours=+21)
+        rd2=reldate.relativedelta(hour=13,minute=0,second=0,microsecond=0)
+        expires = today+rd+rd2
+        maxage = expires-today
+        return maxage.seconds
+
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)
 
@@ -70,16 +79,13 @@ class BillboardSpider(CrawlSpider):
         chart['origin'] = response.url
         chart['source'] = 'billboard'
         chart['id'] = slugify(chart_name)
-        today = datetime.datetime.today()
-        rd=reldate.relativedelta(weekday=reldate.TH(+1),hours=+21)
-        rd2=reldate.relativedelta(hour=13,minute=0,second=0,microsecond=0)
-        expires = today+rd+rd2
-        chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-        maxage = expires-today
-        chart['maxage'] = maxage.seconds
         chart['list'] = []
-
+    
+        cacheControl = chartCache.setCacheControl(self.get_maxAge())
+        chart['date'] = cacheControl.get("Date-Modified")
+        chart['expires'] = cacheControl.get("Date-Expires")
+        chart['maxage'] = cacheControl.get("Max-Age")
+        
         # lets figure out the content type
         lower_name = chart_name.lower()
         if chart_type == 'Albums' or 'albums' in lower_name or 'soundtrack' in lower_name:

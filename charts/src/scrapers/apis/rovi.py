@@ -23,7 +23,6 @@ import urllib, urllib2
 import md5
 import json
 from scrapers.items import ChartItem, slugify
-from scrapers import settings
 from sources.utils import cache as chartCache
 
 API_URI = "http://api.rovicorp.com/"
@@ -32,7 +31,7 @@ SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
 MAX_ALBUMS = 50
 SOURCE = "rovi"
-EXPIRES =settings.GLOBAL_SETTINGS['EXPIRE']
+EXPIRES = 86400 # One day
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
@@ -53,9 +52,12 @@ def request(method, args, additionalValue=None):
     response = urllib2.urlopen(req)
     the_page = response.read()
     content = the_page.decode('utf-8')
-    return json.loads(content)
+    try :
+        return json.loads(content)
+    except Exception :
+        return {}
 
-@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
+#@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
 def fetch_genres():
     method = "data/v1/descriptor/musicgenres"
     args = {
@@ -122,7 +124,6 @@ def parse_albums(name, albums, isEditorial ):
     if albums is None:
         # something went wrong
         return
-
     chart_list =  []
     nullList = []
     for album in albums:
@@ -177,10 +178,9 @@ def parse_albums(name, albums, isEditorial ):
     chart['id'] = chart_id
     chart['list'] = chart_list
     
-    today = datetime.datetime.today()
-    expires = today + datetime.timedelta(seconds=EXPIRES)
-    chart['date'] = today.strftime("%a, %d %b %Y %H:%M:%S +0000")
-    chart['expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    cacheControl = chartCache.setCacheControl(EXPIRES)
+    chart['date'] = cacheControl.get("Date-Modified")
+    chart['expires'] = cacheControl.get("Date-Expires")
     chart['maxage'] = EXPIRES
     
     # metadata is the chart item minus the actual list plus a size
@@ -193,6 +193,8 @@ def parse_albums(name, albums, isEditorial ):
     metadatas[chart_id] = metadata
     chartCache.newreleases[SOURCE] = metadatas
     chartCache.newreleases[SOURCE+chart_id] = dict(chart)
+    chartCache.newreleases[SOURCE+"cacheControl"] = dict(cacheControl)
+    
 
 if __name__ == '__main__':
     for genre in fetch_genres():
