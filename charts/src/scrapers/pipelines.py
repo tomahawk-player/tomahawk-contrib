@@ -4,7 +4,6 @@
 # See: http://doc.scrapy.org/topics/item-pipeline.html
 from scrapy.exceptions import DropItem
 from scrapy import log
-import datetime
 from sources.utils import cache as chartCache
 
 class ScrapersPipeline(object):

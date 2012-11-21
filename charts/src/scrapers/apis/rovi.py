@@ -24,6 +24,7 @@ import md5
 import json
 from scrapers.items import ChartItem, slugify
 from sources.utils import cache as chartCache
+from scrapers import settings
 
 API_URI = "http://api.rovicorp.com/"
 KEY = "7jxr9zggt45h6rg2n4ss3mrj"
@@ -31,7 +32,7 @@ SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
 MAX_ALBUMS = 50
 SOURCE = "rovi"
-EXPIRES = 86400 # One day
+EXPIRES = settings.GLOBAL_SETTINGS['EXPIRE']
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
