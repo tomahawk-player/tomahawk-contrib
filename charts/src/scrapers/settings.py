@@ -12,7 +12,7 @@ BOT_VERSION = '1.0'
 try:
     BASEDIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    BASEDIR = '/Users/hugo/cache'
+    BASEDIR = '/home/charts/cache-stage'
 
 SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'

@@ -27,7 +27,7 @@ from datetime import datetime, timedelta
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    OUTPUT_DIR = '/home/charts/cache'
+    OUTPUT_DIR = '/home/charts/cache-stage'
 
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
