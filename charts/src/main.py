@@ -27,6 +27,17 @@ from resources.newreleases import newreleases
 from flask import Flask
 from werkzeug.routing import BaseConverter
 
+#
+# twisted is our new web backend
+#
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.wsgi import WSGIResource
+# Twisted logging
+import sys
+from twisted.python import log
+from twisted.python.logfile import DailyLogFile
+
 DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -43,5 +54,10 @@ app.register_blueprint(charts)
 app.register_blueprint(newreleases)
 
 if __name__ == '__main__':
-    app.run(port=8080)
-
+    if DEBUG :
+        log.startLogging(sys.stdout)
+        log.startLogging(DailyLogFile.fromFullPath("twisted.log"))
+    # Start the service
+    resource = WSGIResource(reactor, reactor.getThreadPool(), app)
+    reactor.listenTCP(8080, Site(resource), interface="127.0.0.1")
+    reactor.run()
