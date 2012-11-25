@@ -59,5 +59,5 @@ if __name__ == '__main__':
         log.startLogging(DailyLogFile.fromFullPath("twisted.log"))
     # Start the service
     resource = WSGIResource(reactor, reactor.getThreadPool(), app)
-    reactor.listenTCP(8080, Site(resource), interface="127.0.0.1")
+    reactor.listenTCP(8081, Site(resource), interface="192.168.122.2")
     reactor.run()
