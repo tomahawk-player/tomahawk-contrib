@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright (C) 2011 Casey Link <unnamedrambler@gmail.com>
+# Copyright (C) 2012 Hugo Lindström <hugolm84@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +30,7 @@ from datetime import datetime, timedelta
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    OUTPUT_DIR = '/home/charts/cache-stage'
+    OUTPUT_DIR = '/home/charts/cache'
 
 HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
 MAX_THREADS=5
@@ -39,11 +42,6 @@ cache_opts = {
     'cache.data_dir': OUTPUT_DIR+'/cache/data',
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
-
-def totimestamp(dt, epoch=datetime(1970,1,1)):
-    td = dt - epoch
-    #return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6 
-    return td.total_seconds()
 
 def setCacheControl(expiresInSeconds):
     today = datetime.utcnow()
