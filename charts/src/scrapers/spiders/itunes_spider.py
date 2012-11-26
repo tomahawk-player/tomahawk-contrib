@@ -80,7 +80,7 @@ def get_music_feeds(countries):
             # returns a list of tuples, where each tuple
             # contains:
             # url suffix (e.g., 'xml')
-            # urk prefix
+            # url prefix
             # name of the feed (e.g, "topalbums")
             # display name of the feed (e.g., "Top Albums")
             # cc is the country id
@@ -104,13 +104,11 @@ def construct_feeds(music_feeds, limit):
                     continue
                 url = "%s/limit=%s/genre=%s/cc=%s/%s" % (base_url, limit, g_id, item['cc'], suffix)
                 feeds.append(url)
-    return feeds
+    # Only return US new releases
+    return filter(lambda url: 'rss.xml' in url and "US" in url or 'rss.xml' not in url, feeds)
 
 def get_feed_urls(limit):
     feeds = construct_feeds(get_music_feeds(get_countries()), limit)
-    #if rss:
-    #    return feeds
-    #feeds = filter(lambda url: 'SE' in url, feeds)
     return feeds
 
 class ItunesSpider(BaseSpider):
@@ -140,7 +138,7 @@ class ItunesSpider(BaseSpider):
         genre = filter(lambda k: 'genre' in k, urlparser(url).path.split("/"))
         try :
             genre_name = get_genre( genre[0].split("=")[1] )
-            # geo in xpath is different ISO than in url. We want cc
+            # geo in xpath is different ISO than in url. We want cc not xpath
             # geo = feed.xpath('.//channel/language')[0].text
             geo_re = re.compile("cc=(.*)(?=\/)")
             rGeo =  geo_re.search(url)
@@ -150,11 +148,11 @@ class ItunesSpider(BaseSpider):
             return
         
         if 'newreleases' in url :
-            feed_extra = "New Releases"
+            feed_extra = "New Album Releases"
         if 'justadded' in url :
-            feed_extra = "Just Added"
+            feed_extra = "Just Added Albums"
         if 'featuredalbums' in url:
-            feed_extra = "Featured"
+            feed_extra = "Featured Albums"
         
         if feed_extra is None or genre_name is None or geo is None :
             return
@@ -203,16 +201,15 @@ class ItunesSpider(BaseSpider):
     def parse_atom(self, feed):
         ns = {'ns': 'http://www.w3.org/2005/Atom',
             'im': 'http://itunes.apple.com/rss'}
-        
         try:
             _id = feed.xpath('/ns:feed/ns:id', namespaces=ns)[0].text
             _type = feed.xpath('/ns:feed/ns:entry/im:contentType/im:contentType', namespaces=ns)[0].attrib['term']
         except IndexError:
             return
-        
+
         if _type != "Album" and _type != "Track":
             return # skip playlists
-        
+
         entries = feed.xpath('/ns:feed/ns:entry', namespaces=ns)
         chart_list = []
         rank = 0
@@ -232,33 +229,33 @@ class ItunesSpider(BaseSpider):
             item['album'] = album
             item['rank'] = rank
             chart_list.append( dict(item) )
-        
+
         title = feed.xpath('ns:title', namespaces=ns)[0].text
-        
+
         geo = None
         geo_re = re.compile("cc=([a-zA-Z]+)")
         rGeo =  geo_re.search(_id)
         if rGeo != None:
             geo = rGeo.groups()[0]
-        
+
         genre = None
         genre_re = re.compile("genre=(\d+)/")
         rGenre =  genre_re.search(_id)
         if rGenre != None:
             genre = rGenre.groups()[0]
-        
+
         if not genre is None:
             genre = get_genre(genre)
-        
+
         origin = _id
         md5 = hashlib.md5()
         md5.update(_id)
         _id = md5.hexdigest()
-        
+
         if geo is None:
             geo_s = origin.split("/")
             geo = geo_s
-        
+
         chart = ChartItem()
         # Itunes expires tomorrow at 00am
         chart['id'] = _id
@@ -269,14 +266,14 @@ class ItunesSpider(BaseSpider):
         chart['type'] = _type
         chart['list'] = chart_list
         chart['source'] = 'itunes'
-        
+
         # maxage is the last item scraped
         cacheControl = chartCache.setCacheControl(get_maxAge())
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")
-        
+
         if(_id == settings["ITUNES_DEFAULT_ALBUMCHART"] or _id == settings["ITUNES_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
-        
+
         return chart

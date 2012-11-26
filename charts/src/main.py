@@ -56,8 +56,8 @@ app.register_blueprint(newreleases)
 if __name__ == '__main__':
     if DEBUG :
         log.startLogging(sys.stdout)
-        log.startLogging(DailyLogFile.fromFullPath("twisted.log"))
+        log.startLogging(DailyLogFile.fromFullPath("logs/charts-twisted.log"))
     # Start the service
     resource = WSGIResource(reactor, reactor.getThreadPool(), app)
-    reactor.listenTCP(8081, Site(resource), interface="192.168.122.2")
+    reactor.listenTCP(8080, Site(resource), interface="127.0.0.1")
     reactor.run()
