@@ -43,7 +43,7 @@ def parse(type_id, url, extra):
 
     chart_list = []
     source = "ex.fm"
-    chart_type = "track"
+    chart_type = "Track"
     chart_name = type_id.title()+" "+ chart_type.title()+"s"
     chart_id = type_id+chart_type.title()
     if( extra != None ) :
@@ -92,7 +92,7 @@ def parse(type_id, url, extra):
     metadatas = chartCache.storage.get(source, {})
     metadatas[chart_id] = metadata
     chartCache.storage[source] = metadatas
-    chartCache.storage[source+chart_id] = dict(chart)
+    chartCache.storage[source+chart['id']] = dict(chart)
     chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 if __name__ == '__main__':
     parseUrls()
