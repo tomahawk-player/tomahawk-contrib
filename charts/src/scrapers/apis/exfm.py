@@ -24,7 +24,7 @@ from scrapers import settings
 from sources.utils import cache as chartCache
 from scrapers.items import ChartItem, slugify
 
-@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parseUrls():
     url = "http://ex.fm/api/v3/"
     for baseType in ["explore", "trending"] :
@@ -65,7 +65,7 @@ def parse(type_id, url, extra):
     chart['expires'] = cacheControl.get("Date-Expires")
     chart['maxage'] = cacheControl.get("Max-Age")
 
-    chart['id'] = slugify(chart_name)
+    chart['id'] = slugify(chart_id)
     if( extra != None ) :
         chart['genre'] = extra.title()
         chart['default'] = 0
