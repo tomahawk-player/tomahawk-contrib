@@ -43,7 +43,7 @@ charts = Blueprint('charts', __name__)
 ## Routes and Handlers ##
 
 # 'wearehunted' is removed until we get further information on their api status
-generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall']
+generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'hotnewhiphop']
 
 sources = { source: Source(source) for source in generic_sources }
 

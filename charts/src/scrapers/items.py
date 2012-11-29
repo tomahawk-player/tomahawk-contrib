@@ -32,6 +32,18 @@ class SingleTrackItem(Item):
     album = Field(input_processor=Strip(), output_processor=TakeFirst())
     rank = Field(input_processor=Strip(), output_processor=TakeFirst())
 
+class SingleUrlTrackItem(Item):
+    track = Field(input_processor=Strip(), output_processor=TakeFirst())
+    artist = Field(input_processor=Strip(), output_processor=TakeFirst())
+    url = Field(input_processor=Strip(), output_processor=TakeFirst())
+    rank = Field(input_processor=Strip(), output_processor=TakeFirst())
+
+class SingleUrlAlbumItem(Item):
+    album = Field(input_processor=Strip(), output_processor=TakeFirst())
+    artist = Field(input_processor=Strip(), output_processor=TakeFirst())
+    url = Field(input_processor=Strip(), output_processor=TakeFirst())
+    rank = Field(input_processor=Strip(), output_processor=TakeFirst())
+
 class SingleAlbumItem(Item):
     artist = Field(input_processor=Strip(), output_processor=TakeFirst())
     album = Field(input_processor=Strip(), output_processor=TakeFirst())
