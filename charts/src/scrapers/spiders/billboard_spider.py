@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+from datetime import datetime, timedelta
 import dateutil.relativedelta as reldate
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
@@ -52,7 +52,7 @@ class BillboardSpider(CrawlSpider):
     ]
 
     def get_maxAge(self) :
-        today = datetime.datetime.today()
+        today = datetime.utcnow()
         rd=reldate.relativedelta(weekday=reldate.TH(+1),hours=+21)
         rd2=reldate.relativedelta(hour=13,minute=0,second=0,microsecond=0)
         expires = today+rd+rd2

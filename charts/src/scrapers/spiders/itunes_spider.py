@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+from datetime import datetime, timedelta
 import lxml.html
 from lxml import etree
 import urllib2
@@ -51,8 +51,8 @@ def set_genre(_id, name):
     chartCache.storage['itunesgenre_'+_id] = name
 
 def get_maxAge() :
-    today = datetime.datetime.today()
-    expires = datetime.datetime.replace(today +  datetime.timedelta(days=1),hour=1, minute=0, second=0)
+    today = datetime.utcnow()
+    expires = datetime.replace(today +  timedelta(days=1),hour=1, minute=0, second=0)
     maxage = expires-today
     return maxage.seconds
 
@@ -274,6 +274,7 @@ class ItunesSpider(BaseSpider):
         chart['maxage'] = cacheControl.get("Max-Age")
 
         if(_id == settings["ITUNES_DEFAULT_ALBUMCHART"] or _id == settings["ITUNES_DEFAULT_TRACKCHART"]):
+            print "Found default" + _id
             chart['default'] = 1
 
         return chart
