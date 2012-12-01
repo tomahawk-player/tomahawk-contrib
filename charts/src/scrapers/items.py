@@ -35,7 +35,7 @@ class SingleTrackItem(Item):
 class SingleUrlTrackItem(Item):
     track = Field(input_processor=Strip(), output_processor=TakeFirst())
     artist = Field(input_processor=Strip(), output_processor=TakeFirst())
-    url = Field(input_processor=Strip(), output_processor=TakeFirst())
+    stream_url = Field(input_processor=Strip(), output_processor=TakeFirst())
     rank = Field(input_processor=Strip(), output_processor=TakeFirst())
 
 class SingleUrlAlbumItem(Item):

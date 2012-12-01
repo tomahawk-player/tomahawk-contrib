@@ -86,13 +86,15 @@ class HNHHSpider(CrawlSpider):
                 chart['default'] = 1
             chart['type'] = "Album"
             loader = SingleUrlAlbumItem()
+            urlKey = "url"
             url = "http://www.hotnewhiphop.com/ajax/api/getMixtape/"
         elif "song" in response.url :
             chart['type'] = "Track"
             loader = SingleUrlTrackItem()
             # Later on, if we have a hnhh resolver, this url could be used to
             # get a valid mp3 stream.
-            url = "http://www.hotnewhiphop.com/ajax/api/getSong/"
+            url = "hnhh://www.hotnewhiphop.com/ajax/api/getSong/"
+            urlKey = "stream_url"
         else :
             log.msg("Error with %s" %(chart['name']))
             return
@@ -106,9 +108,9 @@ class HNHHSpider(CrawlSpider):
                 loader = XPathItemLoader(SingleUrlTrackItem(), selector=item)
             loader.add_xpath(chart['type'].lower(), 'div[@class="centerBlock"]/h3/a/text()')
             loader.add_xpath('artist', 'div[@class="centerBlock"]/a/i/text()')
-            loader.add_xpath('url', 'div[@class="centerBlock"]/a/@href')
+            loader.add_xpath(urlKey, 'div[@class="centerBlock"]/a/@href')
             single = loader.load_item()
-            single['url'] = url + urlparse(single['url']).path.split(".")[1]
+            single[urlKey] = url + urlparse(single[urlKey]).path.split(".")[1]
             rank += 1
             single['rank'] = rank
             chart_list.append(dict(single))
