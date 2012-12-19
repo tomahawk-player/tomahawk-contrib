@@ -47,6 +47,28 @@ generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'ho
 
 sources = { source: Source(source) for source in generic_sources }
 
+# Filters out anything thats not geo and/or type
+def filterChart(request, chart):
+    tmpDict = {}
+    geo = request.args.get("geo")
+    type = request.args.get("type")
+
+    if geo is None and type is None :
+        return chart
+
+    # Could probably have a nice filter here
+    for item in chart :
+        if geo is not None and type is not None :
+            if geo in chart[item]['geo'] and type in chart[item]['type'] :
+                tmpDict[item] = chart[item]
+        elif geo is not None and type is None:
+            if geo in chart[item]['geo'] :
+                tmpDict[item] = chart[item]
+        elif geo is None and type is not None:
+            if type in chart[item]['type'] :
+                tmpDict[item] = chart[item]
+    return tmpDict
+
 @charts.route('/charts')
 def welcome():
     response = make_response( jsonify(
@@ -72,23 +94,15 @@ def source(id):
         return make_response("Source exist, no charts though", 404)
     for chart in charts:
         charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
-        
+
+    # filter?
+    charts = filterChart(request, charts);
+
     response = make_response(jsonify(charts))
     cacheControl = source.get_cacheControl(isChart = True)
     for key in cacheControl.keys() :
         response.headers.add(key, cacheControl[key])
     return response
-
-def filterChart(request, chart):
-    _filter = request.args.get("filter");
-    filterBy = request.args.get("filterby");
-    i = 0
-    if _filter is not None and filterBy is not None :
-        for item in chart['list'] :
-            if item[filterBy] is not None and _filter in item[filterBy] :
-                chart['list'].pop(i)
-            i += 1
-    return chart
 
 @charts.route('/charts/<id>/<regex(".*"):url>')
 def get_chart(id, url):
@@ -99,7 +113,6 @@ def get_chart(id, url):
     chart = source.get_chart(url)
     if chart is None:
         return make_response("No such chart", 404)
-    chart = filterChart(request, chart)
     response = make_response(jsonify(chart))
     cacheControl = source.get_cacheControl(isChart = True)
     for key in cacheControl.keys() :
