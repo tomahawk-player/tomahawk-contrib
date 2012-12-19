@@ -32,7 +32,7 @@ from sources.source import Source
 
 # flask includes
 #
-from flask import Blueprint, make_response, jsonify
+from flask import Blueprint, make_response, jsonify, request
 #
 #system
 #
@@ -79,6 +79,17 @@ def source(id):
         response.headers.add(key, cacheControl[key])
     return response
 
+def filterChart(request, chart):
+    _filter = request.args.get("filter");
+    filterBy = request.args.get("filterby");
+    i = 0
+    if _filter is not None and filterBy is not None :
+        for item in chart['list'] :
+            if item[filterBy] is not None and _filter in item[filterBy] :
+                chart['list'].pop(i)
+            i += 1
+    return chart
+
 @charts.route('/charts/<id>/<regex(".*"):url>')
 def get_chart(id, url):
     source = sources.get(id, None)
@@ -88,7 +99,7 @@ def get_chart(id, url):
     chart = source.get_chart(url)
     if chart is None:
         return make_response("No such chart", 404)
-
+    chart = filterChart(request, chart)
     response = make_response(jsonify(chart))
     cacheControl = source.get_cacheControl(isChart = True)
     for key in cacheControl.keys() :
