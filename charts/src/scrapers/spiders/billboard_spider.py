@@ -53,11 +53,9 @@ class BillboardSpider(CrawlSpider):
 
     def get_maxAge(self) :
         today = datetime.utcnow()
-        rd=reldate.relativedelta(weekday=reldate.TH(+1),hours=+21)
-        rd2=reldate.relativedelta(hour=13,minute=0,second=0,microsecond=0)
-        expires = today+rd+rd2
+        expires = today+reldate.relativedelta(minute=0,hour=EXPIRES_HOUR,weekday=EXPIRES_DAY)
         maxage = expires-today
-        return maxage.seconds
+        return maxage.total_seconds()
 
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)
