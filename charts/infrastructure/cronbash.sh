@@ -53,6 +53,8 @@ case "$1" in
 ;;
   "hnhh") cd $SCRAPER_PATH && scrapy crawl hotnewhiphop.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
+  "djshop") cd $SCRAPER_PATH && scrapy crawl djshop.de --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+;;
   "rdio") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
 #  "wah") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log

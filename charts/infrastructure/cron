@@ -5,6 +5,7 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
 # (0-59)  (0-23)     (1-31)    (1-12 or Jan-Dec)  (0-6 or Sun-Sat)             
 0           12         *               *                 4           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh billboard
 10           1         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh itunes
+10           12         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh djshop
 30           1         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh hnhh
 #0            1         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh wah
 0            2         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh rdio 
