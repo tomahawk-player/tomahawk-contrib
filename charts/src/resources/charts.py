@@ -37,16 +37,27 @@ from flask import Blueprint, make_response, jsonify, request
 #system
 #
 import urllib
-
+from pkg_resources import parse_version
 charts = Blueprint('charts', __name__)
 
 ## Routes and Handlers ##
 
 # 'wearehunted' is removed until we get further information on their api status
-generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'hotnewhiphop']
+# NOTE!!! If new sources isnt backward comp. with > 0.5.9, append to end!!!!
+generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'hotnewhiphop', 'djshop.de']
 
 sources = { source: Source(source) for source in generic_sources }
 
+# pre 0.5.99 djshop wasnt available, and its not backward comp
+# Check version from tomakawk, itunes didnt make it pre 0.5.99
+def getSources(request):
+    version = str(request.args.get('version'))
+    if version is None or parse_version('0.6.99') > parse_version(version) :
+        sources = { source: Source(source) for source in generic_sources[:6] }
+    else :
+        sources = { source: Source(source) for source in generic_sources }
+    return sources
+    
 # Filters out anything thats not geo and/or type
 def filterChart(request, chart):
     tmpDict = {}
@@ -73,7 +84,7 @@ def filterChart(request, chart):
 def welcome():
     response = make_response( jsonify(
         {
-            'sources': sources.keys(),
+            'sources': getSources(request).keys(),
             'prefix': '/charts/'
         }
     ))
