@@ -44,7 +44,7 @@ charts = Blueprint('charts', __name__)
 
 # 'wearehunted' is removed until we get further information on their api status
 # NOTE!!! If new sources isnt backward comp. with > 0.5.9, append to end!!!!
-generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'hotnewhiphop', 'djshop.de']
+generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'we are hunted', 'hotnewhiphop', 'djshop.de']
 
 sources = { source: Source(source) for source in generic_sources }
 
@@ -57,7 +57,7 @@ def getSources(request):
     else :
         sources = { source: Source(source) for source in generic_sources }
     return sources
-    
+
 # Filters out anything thats not geo and/or type
 def filterChart(request, chart):
     tmpDict = {}
@@ -91,15 +91,15 @@ def welcome():
     for sourceName in sources.keys() :
         try :
             response.headers.add(sourceName + 'Expires', sources.get(sourceName, None).get_cacheControl(isChart = True)['Expires'])
-        except Exception: 
+        except Exception:
             print "Cache Error"
     return response
-       
+
 @charts.route('/charts/<id>')
 def source(id):
     source = sources.get(id, None)
     if source is None:
-        return make_response("No such source", 404)
+        return make_response("No such source, from %s" % sources, 404)
     charts = source.chart_list()
     if  charts is None :
         return make_response("Source exist, no charts though", 404)

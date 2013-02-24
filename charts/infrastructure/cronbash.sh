@@ -57,8 +57,8 @@ case "$1" in
 ;;
   "rdio") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
-#  "wah") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
-#;;
+ "wah") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+;;
   "exfm") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
   "soundcloudwall") cd $API_SCRAPER_PATH && $PYTHONV $1.py &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
