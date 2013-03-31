@@ -32,11 +32,11 @@ def parseUrls():
     consumerKeys = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
     client = oauth.Client(consumerKeys)
     # Regions, might change http://www.rdio.com/availability/
-    regions = [ "US", "SE", "CA", "DE", "GB", "AU", 
-                "BE", "BR", "DK", "EE", "FI", "FR", 
-                "IS", "IE","IT", "LV", "LT", "NL", 
+    regions = [ "US", "SE", "CA", "DE", "GB", "AU",
+                "BE", "BR", "DK", "EE", "FI", "FR",
+                "IS", "IE","IT", "LV", "LT", "NL",
                 "NZ", "NO", "PT", "ES"]
-        
+
     # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
     for baseType in ["Artist", "Album", "Track"] :
         for region in regions :
@@ -45,7 +45,7 @@ def parseUrls():
 def parse(client, url, baseType, region):
     #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
     response, contents = client.request(url, 'POST', urllib.urlencode({
-        'method' : 'getTopCharts', 
+        'method' : 'getTopCharts',
         'type' : baseType,
         '_region' : region
         }))
@@ -67,8 +67,8 @@ def parse(client, url, baseType, region):
 
             cached_list = chartCache.storage.get(source, {})
             chart_list = []
-            chart_name = "Top Overall" 
-            chart_type = baseType.title() 
+            chart_name = "Top Overall"
+            chart_type = baseType.title()
 
             chart = ChartItem()
             chart['name'] = chart_name
