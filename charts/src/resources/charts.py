@@ -50,19 +50,24 @@ sources = { source: Source(source) for source in generic_sources }
 
 # pre 0.5.99 djshop wasnt available, and its not backward comp
 # Check version from tomakawk, itunes didnt make it pre 0.5.99
-def getSources(request):
+def backwardComp(request, versionCheck='0.6.99'):
     version = str(request.args.get('version'))
-    if version is None or parse_version('0.6.99') > parse_version(version) :
+    if version is None or parse_version(versionCheck) > parse_version(version) :
+        return False
+    return True
+
+def getSources(request):
+    if not backwardComp(request) :
         sources = { source: Source(source) for source in generic_sources[:6] }
     else :
         sources = { source: Source(source) for source in generic_sources }
     return sources
 
 # Filters out anything thats not geo and/or type
-def filterChart(request, chart):
+def filterChart(args, chart):
     tmpDict = {}
-    geo = request.args.get("geo")
-    type = request.args.get("type")
+    geo = args.get("geo")
+    type = args.get("type")
 
     if geo is None and type is None :
         return chart
@@ -106,8 +111,12 @@ def source(id):
     for chart in charts:
         charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
 
+    # No geo in rdio, pre 0.6.99
+    if not backwardComp(request) and "rdio" in id:
+        charts = filterChart({"geo" : "US"}, charts);
+    
     # filter?
-    charts = filterChart(request, charts);
+    charts = filterChart(request.args, charts);
 
     response = make_response(jsonify(charts))
     cacheControl = source.get_cacheControl(isChart = True)

@@ -25,20 +25,31 @@ from scrapers import settings
 from sources.utils import cache as chartCache
 from scrapers.items import ChartItem, slugify
 
-@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
 def parseUrls():
 
     url = "http://api.rdio.com/1/"
     consumerKeys = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
     client = oauth.Client(consumerKeys)
-
+    # Regions, might change http://www.rdio.com/availability/
+    regions = [ "US", "SE", "CA", "DE", "GB", "AU", 
+                "BE", "BR", "DK", "EE", "FI", "FR", 
+                "IS", "IE","IT", "LV", "LT", "NL", 
+                "NZ", "NO", "PT", "ES"]
+        
     # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
-    for baseType in ["Artist", "Album", "Track", "Playlist"] :
-        parse(client, url, baseType)
+    for baseType in ["Artist", "Album", "Track"] :
+        for region in regions :
+            parse(client, url, baseType, region)
 
-def parse(client, url, baseType):
+def parse(client, url, baseType, region):
     #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
-    response, contents = client.request(url, 'POST', urllib.urlencode({'method': 'getTopCharts', 'type': baseType})) 
+    response, contents = client.request(url, 'POST', urllib.urlencode({
+        'method' : 'getTopCharts', 
+        'type' : baseType,
+        '_region' : region
+        }))
+
     if( response['status'] !=  '200' ) :
         print "Error " + response['status']
     else :
@@ -49,21 +60,22 @@ def parse(client, url, baseType):
         if( baseType == "Playlist"):
             print "Playlist not implemented"
         else :
-            type_id = "top"+baseType
+            type_id = "top"+baseType+region
             source = "rdio"
             chart_id = source+type_id
-            print("Saving %s - %s" %(source, chart_id))
+            print("Saving %s - %s (%s)" %(source, chart_id, region))
 
             cached_list = chartCache.storage.get(source, {})
             chart_list = []
-            chart_name = "Top Overall"
+            chart_name = "Top Overall" 
             chart_type = baseType.title() 
 
             chart = ChartItem()
             chart['name'] = chart_name
             chart['source'] = source
             chart['type'] = chart_type
-            chart['id'] = slugify(chart_name)
+            chart['geo'] = region
+            chart['id'] = slugify(type_id)
             cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
             chart['date'] = cacheControl.get("Date-Modified")
             chart['expires'] = cacheControl.get("Date-Expires")
@@ -88,6 +100,7 @@ def parse(client, url, baseType):
             metadata = { key: jsonContent[key] for key in metadata_keys }
             metadata['id'] = type_id
             metadata['name'] = "Top Overall"
+            metadata['geo'] = region
             metadata['type'] = baseType
             metadata['source'] = source
             metadata['date'] = cacheControl.get("Date-Modified")
