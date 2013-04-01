@@ -54,7 +54,7 @@ class HNHHSpider(CrawlSpider):
 
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
-        chart_name = hxs.select('//*[@class="mdn800"]/text()').extract()[0].strip()
+        chart_name = "Top 100"
         try:
             chart_type = hxs.select('//*[@class="tab-right-active"]/text()').extract()[0].strip()
         except IndexError:
@@ -113,6 +113,7 @@ class HNHHSpider(CrawlSpider):
             single[urlKey] = url + urlparse(single[urlKey]).path.split(".")[1]
             rank += 1
             single['rank'] = rank
+            print single
             chart_list.append(dict(single))
 
         log.msg("Done with %s" %(chart['name']))
