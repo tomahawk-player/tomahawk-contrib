@@ -41,10 +41,9 @@ class BillboardSpider(CrawlSpider):
     ]
 
     # xpath to retrieve the urls to specific charts
-    chart_xpath = '//div[@class="units"]/ul/li/div[@class="chart"]/h2/a'
+    chart_xpath = '//span[@class="field-content"]/a'
     # the xpath to the pagination links
-    next_page_xpath = '//div[@class="pagination-group"]/ul/li/a/@href'
-
+    next_page_xpath = '//div[@class="chart_pager_bottom"]/div/ul/li[@class="pager-item"]/a/@href'
     # we only need one rule, and that is to follow
     # the links from the charts list page
     rules = [
@@ -60,14 +59,14 @@ class BillboardSpider(CrawlSpider):
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)
 
-        chart_name = hxs.select('//*[@class="printable-chart-header"]/h1/b/text()').extract()[0].strip()
-        chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
+        chart_name = hxs.select('//h1[@id="page-title"]/text()').extract()[0].strip()
+        #chart_type = hxs.select('//*[@id="chart-list"]/div[@id="chart-type-fb"]/text()').extract()[0].strip()
 
         # get a list of pages
         next_pages = hxs.select(self.next_page_xpath).extract()
         # remove javascript links and turn it into a queue, also, we want to exclude next chart (!)
-        next_pages = deque(filter(lambda e: not 'javascript' or slugify(chart_name) in e, next_pages))
-
+        next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
+        print next_pages
         # Correct the grammar to fit our expectations
         if chart_name == 'Germany Songs':
             chart_name = 'German Tracks'
@@ -86,10 +85,10 @@ class BillboardSpider(CrawlSpider):
         
         # lets figure out the content type
         lower_name = chart_name.lower()
-        if chart_type == 'Albums' or 'albums' in lower_name or 'soundtrack' in lower_name:
+        if 'albums' in lower_name or 'soundtrack' in lower_name:
             chart['type'] = 'Album'
             typeItem = SingleAlbumItem()
-        elif chart_type == 'Artists' or 'artists' in lower_name:
+        elif 'artists' in lower_name:
             chart['type'] = 'Artist'
             typeItem =  SingleArtistItem()
         else:
@@ -99,34 +98,39 @@ class BillboardSpider(CrawlSpider):
         if(chart['id'] == settings["BILLBOARD_DEFAULT_ALBUMCHART"] or chart['id'] == settings["BILLBOARD_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
 
+        chart = self.parse_items(hxs, chart, typeItem)
         # ok, we've prepped the chart container, lets start getting the pages
         next_page = next_pages.popleft()
-
         request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages, typeItem))
 
         yield request
 
-    def parse_page(self, response, chart, next_pages, typeItem):
-        
-        hxs = HtmlXPathSelector(response)
-
+    def parse_items(self, hxs, chart, typeItem):
         # parse every chart entry
         chart_list = []
-        for item in hxs.select('//*[@class="printable-row"]'):
+        for item in hxs.select('//div[contains(@class,"chart_listing")]/article'):
             loader = XPathItemLoader(typeItem, selector=item)
-            loader.add_xpath('rank', 'div/div[@class="prank"]/text()')
+            loader.add_xpath('rank', 'header/span[contains(@class, "chart_position")]/text()')
             # ptitle yields the title for the type, so just set the title to whatever the chartype is.
-            loader.add_xpath(chart['type'].lower(), 'div/div[@class="ptitle"]/text()')
-            loader.add_xpath('artist', 'div/div[@class="partist"]/text()')
-            loader.add_xpath('album', 'div/div[@class="palbum"]/text()')
+            loader.add_xpath(chart['type'].lower(), 'header/h1/text()')
+            loader.add_xpath('artist', 'header/p[@class="chart_info"]/a/text()')
+            loader.add_xpath('album', 'header/p[@class="chart_info"]/text()')
 
             single = loader.load_item()
             chart_list.append(dict(single))
-            
+         
         chart['list'] += chart_list
+
+        return chart
+
+    def parse_page(self, response, chart, next_pages, typeItem):
+        
+        hxs = HtmlXPathSelector(response)
+        chart = self.parse_items(hxs, chart, typeItem)
 
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
+            print chart
             yield chart
         else:
             next_page = next_pages.popleft()
