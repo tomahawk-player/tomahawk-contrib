@@ -66,7 +66,7 @@ class BillboardSpider(CrawlSpider):
         next_pages = hxs.select(self.next_page_xpath).extract()
         # remove javascript links and turn it into a queue, also, we want to exclude next chart (!)
         next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
-        print next_pages
+
         # Correct the grammar to fit our expectations
         if chart_name == 'Germany Songs':
             chart_name = 'German Tracks'
@@ -136,7 +136,6 @@ class BillboardSpider(CrawlSpider):
 
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
-            print chart
             yield chart
         else:
             next_page = next_pages.popleft()
