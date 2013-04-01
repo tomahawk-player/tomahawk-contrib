@@ -66,7 +66,7 @@ class BillboardSpider(CrawlSpider):
         next_pages = hxs.select(self.next_page_xpath).extract()
         # remove javascript links and turn it into a queue, also, we want to exclude next chart (!)
         next_pages = deque(filter(lambda e: not 'javascript' in e, next_pages))
-
+        print next_pages
         # Correct the grammar to fit our expectations
         if chart_name == 'Germany Songs':
             chart_name = 'German Tracks'
@@ -82,13 +82,16 @@ class BillboardSpider(CrawlSpider):
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")
-        
         # lets figure out the content type
         lower_name = chart_name.lower()
-        if 'albums' in lower_name or 'soundtrack' in lower_name:
+        if 'songs' in lower_name :
+            chart['type'] = 'Track'
+            typeItem =  SingleTrackItem()
+        elif 'albums' in lower_name \
+            or any(lower_name in s for s in ['soundtracks', 'billboard 200', 'tastemakers']):
             chart['type'] = 'Album'
             typeItem = SingleAlbumItem()
-        elif 'artists' in lower_name:
+        elif any(lower_name in s for s in ['social 50', 'uncharted']):
             chart['type'] = 'Artist'
             typeItem =  SingleArtistItem()
         else:
@@ -100,10 +103,10 @@ class BillboardSpider(CrawlSpider):
 
         chart = self.parse_items(hxs, chart, typeItem)
         # ok, we've prepped the chart container, lets start getting the pages
-        next_page = next_pages.popleft()
-        request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages, typeItem))
-
-        yield request
+        if len(next_pages) > 0 :
+            next_page = next_pages.popleft()
+            request = Request('http://www.billboard.com'+next_page, callback = lambda r: self.parse_page(r, chart, next_pages, typeItem))
+            yield request
 
     def parse_items(self, hxs, chart, typeItem):
         # parse every chart entry
@@ -112,9 +115,12 @@ class BillboardSpider(CrawlSpider):
             loader = XPathItemLoader(typeItem, selector=item)
             loader.add_xpath('rank', 'header/span[contains(@class, "chart_position")]/text()')
             # ptitle yields the title for the type, so just set the title to whatever the chartype is.
-            loader.add_xpath(chart['type'].lower(), 'header/h1/text()')
-            loader.add_xpath('artist', 'header/p[@class="chart_info"]/a/text()')
-            loader.add_xpath('album', 'header/p[@class="chart_info"]/text()')
+            if 'artist' in chart['type'].lower() :
+                loader.add_xpath('artist', 'header/p[@class="chart_info"]/a/text()')
+            else :
+                loader.add_xpath(chart['type'].lower(), 'header/h1/text()')
+                loader.add_xpath('artist', 'header/p[@class="chart_info"]/a/text()')
+                loader.add_xpath('album', 'header/p[@class="chart_info"]/text()')
 
             single = loader.load_item()
             chart_list.append(dict(single))
@@ -130,6 +136,7 @@ class BillboardSpider(CrawlSpider):
 
         if len(next_pages) == 0:
             log.msg("Done with %s" %(chart['name']))
+            print chart
             yield chart
         else:
             next_page = next_pages.popleft()
