@@ -23,7 +23,7 @@ import json
 from scrapers.items import ChartItem, slugify
 from sources.utils import cache as chartCache
 
-EXPIRES = 31556926 #One year
+EXPIRES = 365 #One year
 API_KEY = "TiNg2DRYhBnp01DA3zNag"
 BASE_TITLE = "100 Most Influential Tracks of "
 
@@ -76,11 +76,11 @@ def parseUrl(url, title, default):
         chart['source'] = source
         chart['type'] = chart_type
         chart['default'] = default
-        cacheControl = chartCache.setCacheControl(EXPIRES)
+        expires = chartCache.timedeltaUntilDays(EXPIRES)
+        cacheControl = chartCache.setCacheControl(expires)
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")
-        chart['id'] = slugify(chart_name)
 
         rank = 0
         count = 0;

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta
 import lxml.html
 from lxml import etree
 import urllib2
@@ -49,12 +48,6 @@ def get_genre(_id):
 
 def set_genre(_id, name):
     chartCache.storage['itunesgenre_'+_id] = name
-
-def get_maxAge() :
-    today = datetime.utcnow()
-    expires = datetime.replace(today +  timedelta(days=1),hour=1, minute=0, second=0)
-    maxage = expires-today
-    return maxage.seconds
 
 #@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
 def get_music_feeds(countries):
@@ -115,6 +108,7 @@ class ItunesSpider(BaseSpider):
     name = 'itunes.com'
     allowed_domains = ['itunes.com']
     start_urls = get_feed_urls(settings['ITUNES_LIMIT'])
+
     def parse(self, response):
         try:
             feed = etree.fromstring(response.body)
@@ -188,7 +182,9 @@ class ItunesSpider(BaseSpider):
         chart['list'] = chart_list
         chart['source'] = 'itunes'
         # maxage is the last item scraped
-        cacheControl = chartCache.setCacheControl(get_maxAge())
+        # Expires in 1 days
+        expires = chartCache.timedeltaUntilDays(1)
+        cacheControl = chartCache.setCacheControl(expires)
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")
@@ -268,7 +264,8 @@ class ItunesSpider(BaseSpider):
         chart['source'] = 'itunes'
 
         # maxage is the last item scraped
-        cacheControl = chartCache.setCacheControl(get_maxAge())
+        expires = chartCache.timedeltaUntilDays(1)
+        cacheControl = chartCache.setCacheControl(expires)
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")

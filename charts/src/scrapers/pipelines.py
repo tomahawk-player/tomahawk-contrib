@@ -45,5 +45,5 @@ class ScrapersPipeline(object):
         chart_list[chart_id] = metadata
         self.storage[source] = chart_list
         self.storage[chart_id] = dict(item)
-        self.storage[source+"cacheControl"] = dict(chartCache.setCacheControl(item["maxage"]))
+        self.storage[source+"cacheControl"] = dict(chartCache.setCacheControl({'seconds' : item["maxage"]}))
         return item

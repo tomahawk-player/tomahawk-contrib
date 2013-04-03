@@ -60,7 +60,8 @@ def parse(type_id, url, extra):
     chart['type'] = chart_type
     chart['default'] = 1
 
-    cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+    expires = chartCache.timedeltaUntilDays(1)
+    cacheControl = chartCache.setCacheControl(expires)
     chart['date'] = cacheControl.get("Date-Modified")
     chart['expires'] = cacheControl.get("Date-Expires")
     chart['maxage'] = cacheControl.get("Max-Age")

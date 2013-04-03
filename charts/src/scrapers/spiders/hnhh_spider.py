@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta
+
 from urlparse import urlparse
-import dateutil.relativedelta as reldate
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -45,12 +44,6 @@ class HNHHSpider(CrawlSpider):
         "http://www.hotnewhiphop.com/top100/mixtape/mainstream/alltime/1",
 
     ]
-    # Expires next day at 1AM
-    def get_maxAge(self) :
-        today = datetime.utcnow()
-        expires = datetime.replace(today +  timedelta(days=1),hour=1, minute=0, second=0)
-        maxage = expires-today
-        return maxage.seconds
 
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
@@ -76,11 +69,13 @@ class HNHHSpider(CrawlSpider):
         chart['id'] = slugify(id)
         chart['list'] = []
         chart['extra'] = extra
-        cacheControl = chartCache.setCacheControl(self.get_maxAge())
+
+        expires = chartCache.timedeltaUntilDays(1)
+        cacheControl = chartCache.setCacheControl(expires)
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")
-       
+
         if "mixtape" in response.url :
             if extra == "Upcoming" :
                 chart['default'] = 1
@@ -113,7 +108,6 @@ class HNHHSpider(CrawlSpider):
             single[urlKey] = url + urlparse(single[urlKey]).path.split(".")[1]
             rank += 1
             single['rank'] = rank
-            print single
             chart_list.append(dict(single))
 
         log.msg("Done with %s" %(chart['name']))

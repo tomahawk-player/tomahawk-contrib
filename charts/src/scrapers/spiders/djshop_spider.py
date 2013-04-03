@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta
+
 from urlparse import urlparse
-import dateutil.relativedelta as reldate
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -31,6 +30,7 @@ import re
 import urllib2
 
 
+
 class DjShopSpider(CrawlSpider):
     name = "djshop.de"
     allowed_domains = ["djshop.de"]
@@ -42,7 +42,12 @@ class DjShopSpider(CrawlSpider):
                   {"unpretty" : "Charts Style Charts", "pretty" : "Vinyl Charts"}, \
                   {"unpretty" : "Charts Top 100", "pretty" : "Top 100"}, \
                   {"unpretty" : "Charts International Charts", "pretty" : "International Charts"}]
-                                 
+
+    # Expires in 2 days
+    expires = chartCache.timedeltaUntilDays(2)
+    cacheControl = chartCache.setCacheControl(expires)
+
+
     def __init__(self, name=None, **kwargs):
         super(DjShopSpider, self).__init__()
         self.get_chart_urls()
@@ -60,15 +65,13 @@ class DjShopSpider(CrawlSpider):
             except Exception, e:
                 print e
 
-    
-    
     def parse(self, response):
         log.msg("Parsing: %s"%(response.url), loglevel=log.INFO)
         hxs = HtmlXPathSelector(response)
         chart = ChartItem()
         title = hxs.select("//title/text()").extract()[0].strip()
         test = re.compile('^(MP3 Downloads(\sCharts|\s))(.*?)(\sCharts)', re.IGNORECASE)
-        
+
         try:
             cTitle = test.match(title).group(3)
             if cTitle is not None:
@@ -79,6 +82,7 @@ class DjShopSpider(CrawlSpider):
                     type += self.chartTypes[0]["pretty"]
                 chart["extra"] = type;
                 chart["name"] = cTitle.replace(self.chartTypes[2]["pretty"], "")
+
         except Exception:
             for type in self.chartTypes:
                 if type["unpretty"] in title :
@@ -102,13 +106,11 @@ class DjShopSpider(CrawlSpider):
             chart['source'] = 'djshop.de'
             chart['id'] = slugify(chart["extra"] + chart["name"])
             chart["type"] = "Album"
-            cacheControl = chartCache.setCacheControl(chartCache.getMaxAge())
-            chart['date'] = cacheControl.get("Date-Modified")
-            chart['expires'] = cacheControl.get("Date-Expires")
-            chart['maxage'] = cacheControl.get("Max-Age")
-
+            chart['date'] = self.cacheControl.get("Date-Modified")
+            chart['expires'] = self.cacheControl.get("Date-Expires")
+            chart['maxage'] = self.cacheControl.get("Max-Age")
             chart['list'] = []
-            
+
             '''
                 This could be transformed into a track chart
                 However, theres so many various and compilations
@@ -116,6 +118,7 @@ class DjShopSpider(CrawlSpider):
                 Also, its actually a Vinyl chart, so theres no "track"
                 ranking involved
             '''
+
             typeItem = SingleAlbumItem()
             cols = hxs.select('//div[@class="column1"]')
             chart_list = []
@@ -126,6 +129,6 @@ class DjShopSpider(CrawlSpider):
                 loader.add_xpath('album', "h3/text()")
                 single = loader.load_item()
                 chart_list.append(dict(single))
-    
+
             chart['list'] += chart_list
             yield chart

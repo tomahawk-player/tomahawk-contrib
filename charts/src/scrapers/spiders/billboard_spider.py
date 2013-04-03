@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta
-import dateutil.relativedelta as reldate
+
 from scrapy.conf import settings
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
@@ -50,11 +49,8 @@ class BillboardSpider(CrawlSpider):
         Rule(SgmlLinkExtractor(allow=['/charts/\w+'], restrict_xpaths=chart_xpath), callback='parse_chart', follow=True)
     ]
 
-    def get_maxAge(self) :
-        today = datetime.utcnow()
-        expires = today+reldate.relativedelta(minute=0,hour=EXPIRES_HOUR,weekday=EXPIRES_DAY)
-        maxage = expires-today
-        return maxage.total_seconds()
+    expires = chartCache.timedeltaUntilWeekday(EXPIRES_DAY, EXPIRES_HOUR)
+    cacheControl = chartCache.setCacheControl(expires)
 
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)
@@ -70,18 +66,18 @@ class BillboardSpider(CrawlSpider):
         # Correct the grammar to fit our expectations
         if chart_name == 'Germany Songs':
             chart_name = 'German Tracks'
-        
+
         chart = ChartItem()
         chart['name'] = chart_name
         chart['origin'] = response.url
         chart['source'] = 'billboard'
         chart['id'] = slugify(chart_name)
         chart['list'] = []
-    
-        cacheControl = chartCache.setCacheControl(self.get_maxAge())
-        chart['date'] = cacheControl.get("Date-Modified")
-        chart['expires'] = cacheControl.get("Date-Expires")
-        chart['maxage'] = cacheControl.get("Max-Age")
+
+        chart['date'] = self.cacheControl.get("Date-Modified")
+        chart['expires'] = self.cacheControl.get("Date-Expires")
+        chart['maxage'] = self.cacheControl.get("Max-Age")
+
         # lets figure out the content type
         lower_name = chart_name.lower()
         if 'songs' in lower_name :
@@ -97,7 +93,7 @@ class BillboardSpider(CrawlSpider):
         else:
             chart['type'] = 'Track'
             typeItem =  SingleTrackItem()
-        
+
         if(chart['id'] == settings["BILLBOARD_DEFAULT_ALBUMCHART"] or chart['id'] == settings["BILLBOARD_DEFAULT_TRACKCHART"]):
             chart['default'] = 1
 

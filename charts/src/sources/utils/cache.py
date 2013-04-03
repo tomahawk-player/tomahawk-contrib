@@ -44,22 +44,27 @@ cache_opts = {
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
 
+# Note: Weekday starts on 0. eg. 3 = Thursday
+def timedeltaUntilWeekday(weekday, hour) :
+    today = datetime.utcnow()
+    expires = today+reldate.relativedelta(minute=0,hour=hour,weekday=weekday)
+    return {'expires' : expires-today, 'date' : expires, 'seconds' :  (expires-today).total_seconds() }
 
 # Default expires next day at 1AM
-def getMaxAge(days=1, hour=1) :
+def timedeltaUntilDays(days=1, hour=1) :
     today = datetime.utcnow()
     expires = datetime.replace(today + timedelta(days=days), hour=hour, minute=0, second=0)
-    return (expires-today).total_seconds()
+    return dict({"expires" : expires-today, "date" : expires, 'seconds' :  (expires-today).total_seconds() })
 
-def setCacheControl(expiresInSeconds):
+def setCacheControl(delta):
     today = datetime.utcnow()
-    expires = today + timedelta(seconds=expiresInSeconds)
+    expires = today + timedelta(seconds=delta['seconds'])
     return {
-            "Expires" : int((expires - datetime.utcfromtimestamp(0)).total_seconds()),
-            "Max-Age" : int(expiresInSeconds),
-            "Date-Modified" : today.strftime("%a, %d %b %Y %H:%M:%S +0000"),
-            "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
-           }
+        "Expires" : int((expires - datetime.utcfromtimestamp(0)).total_seconds()),
+        "Max-Age" : int(delta['seconds']),
+        "Date-Modified" : today.strftime("%a, %d %b %Y %H:%M:%S +0000"),
+        "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
 storage = shove.Shove("file://"+OUTPUT_DIR+'/sources', optimize=False)

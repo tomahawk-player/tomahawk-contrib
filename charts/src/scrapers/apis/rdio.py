@@ -76,7 +76,8 @@ def parse(client, url, baseType, region):
             chart['type'] = chart_type
             chart['geo'] = region
             chart['id'] = slugify(type_id)
-            cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+            expires = chartCache.timedeltaUntilDays(1)
+            cacheControl = chartCache.setCacheControl(expires)
             chart['date'] = cacheControl.get("Date-Modified")
             chart['expires'] = cacheControl.get("Date-Expires")
             chart['maxage'] = cacheControl.get("Max-Age")

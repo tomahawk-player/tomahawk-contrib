@@ -74,10 +74,10 @@ def parse():
         chart['type'] = content_type
         chart['default'] = 1
 
-        if modifier == 'all':
-            cacheControl = chartCache.setCacheControl(secondsTillTomorrow())
-        else:
-            cacheControl = chartCache.setCacheControl(settings.GLOBAL_SETTINGS['EXPIRE'])
+        # Seems to be updated each day at 6
+        expires = chartCache.timedeltaUntilDays(1, 18)
+        cacheControl = chartCache.setCacheControl(expires)
+
         chart['date'] = cacheControl.get("Date-Modified")
         chart['expires'] = cacheControl.get("Date-Expires")
         chart['maxage'] = cacheControl.get("Max-Age")

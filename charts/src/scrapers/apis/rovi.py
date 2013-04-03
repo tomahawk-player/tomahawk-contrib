@@ -32,7 +32,9 @@ SECRET = "XUnYutaAW6"
 DAYS_AGO = 365
 MAX_ALBUMS = 50
 SOURCE = "rovi"
-EXPIRES = settings.GLOBAL_SETTINGS['EXPIRE']
+
+# Expires in one day
+EXPIRES = 1
 
 def make_sig():
     pre_sig = KEY+SECRET+str(int(time()))
@@ -178,12 +180,13 @@ def parse_albums(name, albums, isEditorial ):
     chart['default'] = 1
     chart['id'] = chart_id
     chart['list'] = chart_list
-    
-    cacheControl = chartCache.setCacheControl(EXPIRES)
+
+    expires = chartCache.timedeltaUntilDays(EXPIRES)
+    cacheControl = chartCache.setCacheControl(expires)
     chart['date'] = cacheControl.get("Date-Modified")
     chart['expires'] = cacheControl.get("Date-Expires")
-    chart['maxage'] = EXPIRES
-    
+    chart['maxage'] = cacheControl.get("Max-Age")
+
     # metadata is the chart item minus the actual list plus a size
     metadata_keys = filter(lambda k: k != 'list', chart)
     metadata = { key: chart[key] for key in metadata_keys }
