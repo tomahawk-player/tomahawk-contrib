@@ -20,12 +20,13 @@
 Contains information regarding caching behavior
 """
 
+
+from datetime import datetime, timedelta
+import dateutil.relativedelta as reldate
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
 import shove
 import os
-
-from datetime import datetime, timedelta
 
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
@@ -43,6 +44,13 @@ cache_opts = {
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
 
+
+# Default expires next day at 1AM
+def getMaxAge(days=1, hour=1) :
+    today = datetime.utcnow()
+    expires = datetime.replace(today + timedelta(days=days), hour=hour, minute=0, second=0)
+    return (expires-today).total_seconds()
+
 def setCacheControl(expiresInSeconds):
     today = datetime.utcnow()
     expires = today + timedelta(seconds=expiresInSeconds)
@@ -54,6 +62,5 @@ def setCacheControl(expiresInSeconds):
            }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-
 storage = shove.Shove("file://"+OUTPUT_DIR+'/sources', optimize=False)
 newreleases = shove.Shove("file://"+OUTPUT_DIR+'/newreleases', optimize=False)
