@@ -118,6 +118,3 @@ class ChartDetails():
                 chart = { itemkey: item for itemkey, item in chart.iteritems() if fkey in item and item[fkey] in filters[fkey] }
 
         return chart
-
-if __name__ == '__main__':
-    print ChartDetails().getSources({'version' : '0.6.99'} )
