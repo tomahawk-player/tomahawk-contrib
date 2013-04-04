@@ -73,7 +73,7 @@ def parseUrl(url, title, default):
         chart_type = _type
         chart = ChartItem()
         chart['name'] = chart_name
-        chart['display_name'] = chart["name"] if chart["name"] else "Top Overall"
+        chart['display_name'] = chart_name if chart_name else "Top Overall"
         chart['source'] = source
         chart['type'] = chart_type
         chart['default'] = default
