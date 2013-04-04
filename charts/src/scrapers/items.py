@@ -56,6 +56,7 @@ class SingleArtistItem(Item):
 
 class ChartItem(Item):
     name = Field()
+    display_name = Field()
     id = Field()
     origin = Field()
     list = Field()

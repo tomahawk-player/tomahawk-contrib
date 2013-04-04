@@ -98,7 +98,7 @@ def construct_feeds(music_feeds, limit):
                 url = "%s/limit=%s/genre=%s/cc=%s/%s" % (base_url, limit, g_id, item['cc'], suffix)
                 feeds.append(url)
     # Only return US new releases
-    return filter(lambda url: 'rss.xml' in url and "US" in url or 'rss.xml' not in url, feeds)
+    return filter(lambda url: "US" in url, feeds)
 
 def get_feed_urls(limit):
     feeds = construct_feeds(get_music_feeds(get_countries()), limit)
@@ -255,6 +255,7 @@ class ItunesSpider(BaseSpider):
         chart = ChartItem()
         # Itunes expires tomorrow at 00am
         chart['id'] = _id
+        chart['display_name'] = genre if genre else "Top Overall"
         chart['origin'] = origin
         chart['genre'] = genre
         chart['geo'] = geo

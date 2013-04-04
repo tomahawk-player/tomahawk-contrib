@@ -70,9 +70,10 @@ def parse():
 
         chart = ChartItem()
         chart['name'] = charttype.title()
+        chart['display_name'] = chart["name"] if chart["name"] else "Top Overall"
         chart['source'] = source
         chart['type'] = content_type
-        chart['default'] = 1
+        chart['default'] = 1 if "Mainstream" in chart["name"] else 0
 
         # Seems to be updated each day at 6
         expires = chartCache.timedeltaUntilDays(1, 18)

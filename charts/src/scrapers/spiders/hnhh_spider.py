@@ -64,6 +64,7 @@ class HNHHSpider(CrawlSpider):
         id = chart_name + extra + chart_type    
         chart = ChartItem()
         chart['name'] = chart_name + " " + chart_type
+        chart['display_name'] = chart["name"] if chart["name"] else "Top Overall"
         chart['origin'] = response.url
         chart['source'] = 'hotnewhiphop'
         chart['id'] = slugify(id)

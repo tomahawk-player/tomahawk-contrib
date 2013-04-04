@@ -72,7 +72,7 @@ def parse(type_id, url, extra):
         chart['default'] = 0
     else:
         chart['default'] = 1
-
+    chart['display_name'] = extra.title() if extra else "Trending"
     rank = 0
     for items in jsonContent['songs']:
         t = {}

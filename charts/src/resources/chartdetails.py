@@ -42,32 +42,34 @@ class ChartDetails():
 
     '''
         Add sources, if no Name is given, a titled id will be used as prettyName.
+        Specify wether the chart have extras (geo, genre, extra)
     '''
     def __init__(self):
-        self.update(self.__bcList, id = "itunes", name = "iTunes", desc = "Updated daily, browse what currently hot on Itunes. Includes albums, tracks by genre.")
+        self.update(self.__bcList, id = "itunes", name = "iTunes", desc = "Updated daily, browse what currently hot on Itunes. Includes albums, tracks by genre.", extra = True)
         self.update(self.__bcList, id = "billboard", desc = "The week's top-selling and most played albums and tracks across all genres, ranked by sales data and radio airtime as compiled by Nielsen.")
         self.update(self.__bcList, id = "soundcloudwall",  desc = "SoundCloudWall publishes a playlist of the 1000 most influential tracks on SoundCloud each month.")
         self.update(self.__bcList, id = "we are hunted", desc = "Publishes awesome music charts, recognised by industry insiders as the best source of new music in the world today.")
-        self.update(self.__bcList, id = "rdio",  desc = "Hear the music that is most popular on Rdio right now, features todays top albums, tracks and artists.")
+        self.update(self.__bcList, id = "rdio",  desc = "Hear the music that is most popular on Rdio right now, features todays top albums, tracks and artists.", extra = True)
         self.update(self.__bcList, id = "ex.fm", desc = "Discover a pool of great music. Featuring tracks by genres, weekly mix-tapes, mashups and more.")
 
-        self.update(self.__sourceList, id = "djshop.de", name = "djShop.de", desc = "Updated daily with what's currently hot on the electronic scene.")
-        self.update(self.__sourceList, id = "hotnewhiphop",  name = "HotNewHipHop", desc = "Real hip-hop fans collaborates to create HotNewHiphops's daily updated charts.")
+        self.update(self.__sourceList, id = "djshop.de", name = "djShop.de", desc = "Updated daily with what's currently hot on the electronic scene.", extra = True)
+        self.update(self.__sourceList, id = "hotnewhiphop",  name = "HotNewHipHop", desc = "Real hip-hop fans collaborates to create HotNewHiphops's daily updated charts.", extra = True)
 
         # Build!
         self.__sourceList.update(self.__bcList);
 
-    def update(self, dest, id = None, name = None, desc = None ):
-        dest.update(self.__detail(id, name, desc))
-
-    def __detail(self, id = None, name = None, desc = None):
+    def update(self, dest, id = None, name = None, desc = None, extra = False ):
         if not name :
             name = self.__titlecase__(id)
+        dest.update(self.__detail(id, name, desc, extra))
+
+    def __detail(self, id = None, name = None, desc = None, extra = False):
         return { id: {
                     'id' : id, 
                     'name' : name, 
                     'description' : desc, 
-                    'image' : "%s%s-logo.png" % (self.__baseImageUrl, id )
+                    'image' : "%s%s-logo.png" % (self.__baseImageUrl, id ),
+                    'have_extra' : extra
                 }
               }
 
@@ -109,6 +111,11 @@ class ChartDetails():
         return self.__sourceList
 
     def filterChart(self, args, chart):
+        if self.backwardComp(args):
+            for attr, item in chart.iteritems():
+                if 'type' in item and not item['type'].endswith("s"):
+                    chart[attr]['type'] = "%ss" % chart[attr]['type']
+
         filters = {'geo' : args.get('geo'), 'type' : args.get('type')}
         if filters.get('geo') is None and filters.get('type') is None :
             return chart

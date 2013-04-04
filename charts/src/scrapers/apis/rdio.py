@@ -72,6 +72,7 @@ def parse(client, url, baseType, region):
 
             chart = ChartItem()
             chart['name'] = chart_name
+            chart['display_name'] = chart_name
             chart['source'] = source
             chart['type'] = chart_type
             chart['geo'] = region
@@ -100,7 +101,8 @@ def parse(client, url, baseType, region):
             metadata_keys = filter(lambda k: k != 'result', jsonContent.keys())
             metadata = { key: jsonContent[key] for key in metadata_keys }
             metadata['id'] = type_id
-            metadata['name'] = "Top Overall"
+            metadata['name'] = chart_name
+            metadata['display_name'] = chart_name
             metadata['geo'] = region
             metadata['type'] = baseType
             metadata['source'] = source

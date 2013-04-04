@@ -20,6 +20,9 @@ class Source(object):
         self.name = name
         return
 
+    def get_name(self):
+        return self.name;
+
     def chart_list(self):
         return cache.storage.get(self.name)
 
@@ -29,11 +32,11 @@ class Source(object):
     def newreleases_list(self):
         return cache.newreleases.get(self.name)
 
-    def get_cacheControl(self, isChart = False):
-        if isChart is True :
-            return cache.storage.get(self.name+"cacheControl", None)
-        else :
-            return cache.newreleases.get(self.name+"cacheControl", None)
+    def get_cacheControlForChart(self):
+        return cache.storage.get(self.name+"cacheControl", None)
+
+    def get_cacheControlForRelease(self):
+        return cache.newreleases.get(self.name+"cacheControl", None)
 
     def get_newreleases(self, chart_id):
         return cache.newreleases.get(self.name+chart_id, None)

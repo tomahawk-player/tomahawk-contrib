@@ -30,6 +30,7 @@ URL structure:
 # local includes
 #
 from chartdetails import ChartDetails
+from sources.utils import cache as cache
 details = ChartDetails();
 
 # flask includes
@@ -46,12 +47,14 @@ charts = Blueprint('charts', __name__)
 
 @charts.route('/charts/detailed')
 def detailed():
+    sources = details.getSources(request)
     response = make_response( jsonify(
         {
             'sources': details.getDetails(request),
             'prefix': '/charts/'
         }
     ))
+    response = cache.appendExpireHeaders(request, sources, response);
     return response
 
 @charts.route('/charts')
@@ -63,11 +66,7 @@ def welcome():
             'prefix': '/charts/'
         }
     ))
-    for sourceName in sources.keys() :
-        try :
-            response.headers.add(sourceName + 'Expires', sources.get(sourceName, None).get_cacheControl(isChart = True)['Expires'])
-        except Exception:
-            print "Cache Error"
+    response = cache.appendExpireHeaders(request, sources, response);
     return response
 
 @charts.route('/charts/<id>')
@@ -87,7 +86,7 @@ def source(id):
 
     # No geo in rdio, pre 0.6.99
     if not details.backwardComp(request.args) and "rdio" in id:
-        charts = details.filterChart({"geo" : "US"}, charts);
+        charts = details.filterChart({"geo" : "US", "version" : request.args.get("version")}, charts);
 
     # filter?
     charts = details.filterChart(request.args, charts);
@@ -96,10 +95,7 @@ def source(id):
     charts.update(details.getDetail(request, id));
 
     response = make_response(jsonify(charts))
-    cacheControl = source.get_cacheControl(isChart = True)
-
-    for key in cacheControl.keys() :
-        response.headers.add(key, cacheControl[key])
+    response = cache.appendCacheHeader(source, response)
 
     return response
 
@@ -118,8 +114,6 @@ def get_chart(id, url):
         return make_response("No such chart", 404)
 
     response = make_response(jsonify(chart))
-    cacheControl = source.get_cacheControl(isChart = True)
-    for key in cacheControl.keys() :
-        response.headers.add(key, cacheControl[key])
+    response = cache.appendCacheHeader(source, response)
     return response
 

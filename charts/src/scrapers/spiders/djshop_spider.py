@@ -102,6 +102,7 @@ class DjShopSpider(CrawlSpider):
 
         if "name" in chart :
             chart["name"] = chart["name"].rstrip("-").strip()
+            chart['display_name'] = chart["name"] if chart["name"] else "Top Overall"
             chart['origin'] = response.url
             chart['source'] = 'djshop.de'
             chart['id'] = slugify(chart["extra"] + chart["name"])

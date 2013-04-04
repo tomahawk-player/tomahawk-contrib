@@ -44,6 +44,10 @@ cache_opts = {
     'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
 }
 
+methodcache = CacheManager(**parse_cache_config_options(cache_opts))
+storage = shove.Shove("file://"+OUTPUT_DIR+'/sources', optimize=False)
+newreleases = shove.Shove("file://"+OUTPUT_DIR+'/newreleases', optimize=False)
+
 # Note: Weekday starts on 0. eg. 3 = Thursday
 def timedeltaUntilWeekday(weekday, hour) :
     today = datetime.utcnow()
@@ -66,6 +70,28 @@ def setCacheControl(delta):
         "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
     }
 
-methodcache = CacheManager(**parse_cache_config_options(cache_opts))
-storage = shove.Shove("file://"+OUTPUT_DIR+'/sources', optimize=False)
-newreleases = shove.Shove("file://"+OUTPUT_DIR+'/newreleases', optimize=False)
+def appendCacheHeader(source, response, isChart = True):
+    if isChart:
+        cacheControl = source.get_cacheControlForChart()
+    else:
+        cacheControl = source.get_cacheControlForRelease();
+    try:
+        for key in cacheControl.keys() :
+            response.headers.add(key, cacheControl[key])
+    except Exception, e:
+        print "Cache Error: %s" % e
+    return response;
+
+def appendExpireHeaders(request, sources, response, isChart = True):
+    for source in sources:
+        source = sources.get(source, None)
+        try:
+            if isChart:
+                expires = source.get_cacheControlForChart()['Expires'];
+            else:
+                expires = source.get_cacheControlForRelease()['Expires']
+            response.headers.add(source.get_name() + 'Expires', expires)
+        except Exception, e:
+            print "Expiration Error: %s" % e
+    return response
+

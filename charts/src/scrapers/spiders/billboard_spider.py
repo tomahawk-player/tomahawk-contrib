@@ -69,6 +69,7 @@ class BillboardSpider(CrawlSpider):
 
         chart = ChartItem()
         chart['name'] = chart_name
+        chart['display_name'] = chart_name if chart_name else "Top Overall"
         chart['origin'] = response.url
         chart['source'] = 'billboard'
         chart['id'] = slugify(chart_name)
