@@ -23,73 +23,43 @@ URL structure:
 /charts : contains resources with charts
 /charts/<name> : list of charts for a source
 /charts/<name>/<id> : chart data for source
+/charts/detailed : get detailed information about sources
 """
 
 #
 # local includes
 #
-from sources.source import Source
+from chartdetails import ChartDetails
+details = ChartDetails();
 
 # flask includes
 #
 from flask import Blueprint, make_response, jsonify, request
+
 #
 #system
 #
 import urllib
-from pkg_resources import parse_version
 charts = Blueprint('charts', __name__)
 
 ## Routes and Handlers ##
 
-# 'wearehunted' is removed until we get further information on their api status
-# NOTE!!! If new sources isnt backward comp. with > 0.5.9, append to end!!!!
-generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'we are hunted', 'hotnewhiphop', 'djshop.de']
-
-sources = { source: Source(source) for source in generic_sources }
-
-# pre 0.5.99 djshop wasnt available, and its not backward comp
-# Check version from tomakawk, itunes didnt make it pre 0.5.99
-def backwardComp(request, versionCheck='0.6.99'):
-    version = str(request.args.get('version'))
-    if version is None or parse_version(versionCheck) > parse_version(version) :
-        return False
-    return True
-
-def getSources(request):
-    if not backwardComp(request) :
-        sources = { source: Source(source) for source in generic_sources[:6] }
-    else :
-        sources = { source: Source(source) for source in generic_sources }
-    return sources
-
-# Filters out anything thats not geo and/or type
-def filterChart(args, chart):
-    tmpDict = {}
-    geo = args.get("geo")
-    type = args.get("type")
-
-    if geo is None and type is None :
-        return chart
-
-    # Could probably have a nice filter here
-    for item in chart :
-        if geo is not None and type is not None :
-            if geo in chart[item]['geo'] and type in chart[item]['type'] :
-                tmpDict[item] = chart[item]
-        elif geo is not None and type is None:
-            if geo in chart[item]['geo'] :
-                tmpDict[item] = chart[item]
-        elif geo is None and type is not None:
-            if type in chart[item]['type'] :
-                tmpDict[item] = chart[item]
-    return tmpDict
+@charts.route('/charts/detailed')
+def detailed():
+    response = make_response( jsonify(
+        {
+            'sources': details.getDetails(request),
+            'prefix': '/charts/'
+        }
+    ))
+    return response
 
 @charts.route('/charts')
 def welcome():
+    sources = details.getSources(request)
     response = make_response( jsonify(
         {
-            'sources': getSources(request).keys(),
+            'sources': sources.keys(),
             'prefix': '/charts/'
         }
     ))
@@ -102,37 +72,51 @@ def welcome():
 
 @charts.route('/charts/<id>')
 def source(id):
+    sources = details.getSources(request)
     source = sources.get(id, None)
+
     if source is None:
         return make_response("No such source, from %s" % sources, 404)
+
     charts = source.chart_list()
+
     if  charts is None :
         return make_response("Source exist, no charts though", 404)
     for chart in charts:
         charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
 
     # No geo in rdio, pre 0.6.99
-    if not backwardComp(request) and "rdio" in id:
-        charts = filterChart({"geo" : "US"}, charts);
-    
+    if not details.backwardComp(request.args) and "rdio" in id:
+        charts = details.filterChart({"geo" : "US"}, charts);
+
     # filter?
-    charts = filterChart(request.args, charts);
+    charts = details.filterChart(request.args, charts);
+
+    # Append details?
+    charts.update(details.getDetail(request, id));
 
     response = make_response(jsonify(charts))
     cacheControl = source.get_cacheControl(isChart = True)
+
     for key in cacheControl.keys() :
         response.headers.add(key, cacheControl[key])
+
     return response
 
 @charts.route('/charts/<id>/<regex(".*"):url>')
 def get_chart(id, url):
+    sources = details.getSources(request)
     source = sources.get(id, None)
+
     if source is None:
         return make_response("No such source", 404)
+
     url = urllib.unquote_plus(url)
     chart = source.get_chart(url)
+
     if chart is None:
         return make_response("No such chart", 404)
+
     response = make_response(jsonify(chart))
     cacheControl = source.get_cacheControl(isChart = True)
     for key in cacheControl.keys() :
