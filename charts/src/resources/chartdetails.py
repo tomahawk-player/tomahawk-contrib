@@ -32,7 +32,7 @@ class ChartDetails():
     __bcList = {}
 
     '''
-        sourceList has sources that can be added to Tomahawk versions greater than latest stable
+        sourceList has sources that can be added to Tomahawk versions greater than stable-0.6.1 and from master-0.6.99 and onwards
         That means, charts that requires Tomahawk to be updated, to enable Geo/Extra/Genre types!
         ONLY
             [Source] - [GEO]    - [Type] - Chart
