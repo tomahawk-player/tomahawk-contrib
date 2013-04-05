@@ -97,7 +97,7 @@ def get_nr(id, url):
         return make_response("No such new release", 404)
 
     response = make_response(jsonify(newrelease))
-    for key in source.get_cacheControlForeRelease().keys() :
+    for key in source.get_cacheControlForRelease().keys() :
         response.headers.add(key, source.get_cacheControlForRelease()[key])
     return response
 
