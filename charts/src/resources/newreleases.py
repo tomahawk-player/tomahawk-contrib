@@ -60,7 +60,7 @@ def welcome():
     response = make_response(jsonContent)
     try:
         for sourceName in getSources(request).keys() :
-            response.headers.add(sourceName + "Expires", int(getSources(request).get(sourceName, None).get_cacheControl()["Expires"]))
+            response.headers.add(sourceName + "Expires", int(getSources(request).get(sourceName, None).get_cacheControlForRelease()["Expires"]))
     except Exception :
         print "Cache Error"
     return response
@@ -82,8 +82,8 @@ def source(id):
         newreleases[nr]['link'] = "/newreleases/%s/%s" %(id, newreleases[nr]['id'])
 
     response = make_response(jsonify(newreleases))
-    for key in source.get_cacheControl().keys() :
-        response.headers.add(key, source.get_cacheControl()[key])
+    for key in source.get_cacheControlForRelease().keys() :
+        response.headers.add(key, source.get_cacheControlForRelease()[key])
     return response
 
 @newreleases.route('/newreleases/<id>/<regex(".*"):url>')
@@ -97,7 +97,7 @@ def get_nr(id, url):
         return make_response("No such new release", 404)
 
     response = make_response(jsonify(newrelease))
-    for key in source.get_cacheControl().keys() :
-        response.headers.add(key, source.get_cacheControl()[key])
+    for key in source.get_cacheControlForeRelease().keys() :
+        response.headers.add(key, source.get_cacheControlForRelease()[key])
     return response
 
