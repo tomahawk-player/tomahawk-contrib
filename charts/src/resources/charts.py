@@ -81,9 +81,13 @@ def source(id):
 
     if  charts is None :
         return make_response("Source exist, no charts though", 404)
-    for chart in charts:
-        charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
 
+    for chart in charts:
+        try:
+            charts[chart]['link'] = "/charts/%s/%s" %(id, charts[chart]['id'])
+        except Exception, e:
+            print "Source error: %s" % e
+        
     # No geo in rdio, pre 0.6.99
     if not details.backwardComp(request.args) and "rdio" in id:
         charts = details.filterChart({"geo" : "US", "version" : request.args.get("version")}, charts);
