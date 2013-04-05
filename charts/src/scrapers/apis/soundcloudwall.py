@@ -76,6 +76,7 @@ def parseUrl(url, title, default):
         chart['display_name'] = chart_name if chart_name else "Top Overall"
         chart['source'] = source
         chart['type'] = chart_type
+        chart['id'] = _id
         chart['default'] = default
         expires = chartCache.timedeltaUntilDays(EXPIRES)
         cacheControl = chartCache.setCacheControl(expires)
