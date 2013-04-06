@@ -54,6 +54,33 @@ class SingleArtistItem(Item):
     rank = Field(input_processor=Strip(), output_processor=TakeFirst())
 
 
+class Detail():
+    def __init__(self, id, name = None, description = None, have_extra = False ):
+        if not name :
+            name = self.__titlecase__(id)
+        self.__detail = {'id' : id,
+            'name' : name,
+            'description' : description,
+            'image' : "http://hatchet.is/images/%s-logo.png" % slugify(id),
+            'have_extra' : have_extra
+        }
+
+    def __titlecase__(self, s):
+        return re.sub(r"[A-Za-z]+(['.][A-Za-z]+)?",
+               lambda mo: mo.group(0)[0].upper() +
+                          mo.group(0)[1:].lower(),
+               s)
+
+    def __getattr__(self, name, *args) :
+        return getattr(self.__detail, name);
+
+class DetailItem(Item):
+    id = Field()
+    name = Field()
+    description = Field()
+    image = Field()
+    have_extra = Field()
+
 class ChartItem(Item):
     name = Field()
     display_name = Field()
@@ -69,5 +96,6 @@ class ChartItem(Item):
     expires = Field()
     maxage = Field()
     extra = Field()
+
 class ScrapersItem(ChartItem):
     pass
