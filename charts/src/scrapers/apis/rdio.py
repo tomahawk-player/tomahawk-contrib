@@ -18,17 +18,18 @@
 # !!NOTE: PYTHONPATH to this project basedir need to be set,
 #       Eg. export PYTHONPATH=/path/to/src/
 
-import urllib
-import oauth2 as oauth
-import json
 from scrapers import settings
+from scrapers.chart import Chart
 from sources.utils import cache as chartCache
-from scrapers.items import ChartItem, slugify
+from scrapers.items import slugify
+import oauth2 as oauth
+import urllib
 
-#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
-def parseUrls():
-
-    url = "http://api.rdio.com/1/"
+class Rdio(Chart):
+    source_id = "rdio"
+    description = "Hear the music that is most popular on Rdio right now, features todays top albums, tracks and artists."
+    have_extra = True 
+    baseUrl = "http://api.rdio.com/1/"
     consumerKeys = oauth.Consumer('gk8zmyzj5xztt8aj48csaart', 'yt35kakDyW')
     client = oauth.Client(consumerKeys)
     # Regions, might change http://www.rdio.com/availability/
@@ -36,88 +37,56 @@ def parseUrls():
                 "BE", "BR", "DK", "EE", "FI", "FR",
                 "IS", "IE","IT", "LV", "LT", "NL",
                 "NZ", "NO", "PT", "ES"]
-
+    defaultRegion = "US"
+    defaultType = "Track"
     # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
-    for baseType in ["Artist", "Album", "Track"] :
-        for region in regions :
-            parse(client, url, baseType, region)
+    baseTypes = ["Artist", "Album", "Track"]
 
-def parse(client, url, baseType, region):
-    #Additional key 'extras' = 'tracks', but in tomahawk chart, we actually want artist, albums and tracks seperated! 
-    response, contents = client.request(url, 'POST', urllib.urlencode({
-        'method' : 'getTopCharts',
-        'type' : baseType,
-        '_region' : region
+    def __init__(self):
+        Chart.__init__(self, self.source_id, self.description, self.have_extra)
+        self.setChartName("Top Overall")
+        self.setChartDisplayName(self.chart_name)
+        self.setExpiresInDays(1)
+        self.parse()
+
+    def parse(self):
+        for baseType in self.baseTypes :
+            for region in self.regions :
+                if region == self.defaultRegion and baseType == self.defaultType:
+                    self.setIsDefault(1)
+                self.parseUrl(baseType, region)
+
+    def parseUrl(self, type, region):
+        response, contents = self.client.request(self.baseUrl, 'POST', urllib.urlencode({
+            'method' : 'getTopCharts',
+            'type' : type,
+            '_region' : region
         }))
 
-    if( response['status'] !=  '200' ) :
-        print "Error " + response['status']
-    else :
-        content = contents.decode('utf-8')
-        jsonContent = json.loads(content)
+        if( response['status'] !=  '200' ) :
+            print "Error " + response['status']
+            return
 
-        # TODO: Playlist charts
-        if( baseType == "Playlist"):
-            print "Playlist not implemented"
-        else :
-            type_id = "top"+baseType+region
-            source = "rdio"
-            chart_id = source+type_id
-            print("Saving %s - %s (%s)" %(source, chart_id, region))
+        self.setChartOrigin(self.baseUrl)
+        self.setChartType(type)
+        self.setChartId(slugify("%s %s %s" % (self.chart_name, type, region)))
+        self.setChartGeo(region)
 
-            cached_list = chartCache.storage.get(source, {})
-            chart_list = []
-            chart_name = "Top Overall"
-            chart_type = baseType.title()
+        jsonContent = self.getJsonFromResponse(contents)
 
-            chart = ChartItem()
-            chart['name'] = chart_name
-            chart['display_name'] = chart_name
-            chart['source'] = source
-            chart['type'] = chart_type
-            chart['geo'] = region
-            chart['id'] = slugify(type_id)
-            expires = chartCache.timedeltaUntilDays(1)
-            cacheControl = chartCache.setCacheControl(expires)
-            chart['date'] = cacheControl.get("Date-Modified")
-            chart['expires'] = cacheControl.get("Date-Expires")
-            chart['maxage'] = cacheControl.get("Max-Age")
-
-            rank = 0
-            for items in jsonContent['result'] :
-                t = {}
-                rank += 1
-                if( baseType == "Artist"):
-                    t["artist"] = items.pop("name")
-                else:
-                    t['artist'] = items.pop("artist")
-                    t[baseType.lower()] = items.pop("name")
-                t["rank"] = rank 
-                chart_list.append(t)
-
-            chart['list'] = chart_list
-
-            # metadata is the chart item minus the actual list plus a size
-            metadata_keys = filter(lambda k: k != 'result', jsonContent.keys())
-            metadata = { key: jsonContent[key] for key in metadata_keys }
-            metadata['id'] = type_id
-            metadata['name'] = chart_name
-            metadata['display_name'] = chart_name
-            metadata['geo'] = region
-            metadata['type'] = baseType
-            metadata['source'] = source
-            metadata['date'] = cacheControl.get("Date-Modified")
-            metadata['expires'] = cacheControl.get("Date-Expires")
-            metadata['maxage'] = cacheControl.get("Max-Age")
-
-            if( baseType == "Track") :
-                metadata['default'] = 1
-
-            metadata['size'] = len(jsonContent['result'])
-            cached_list[chart_id] = metadata
-            chartCache.storage[source] = cached_list
-            chartCache.storage[chart_id] = dict(chart)
-            chartCache.storage[source+"cacheControl"] = dict(cacheControl)
+        chart_list = []
+        rank = 0
+        for items in jsonContent['result'] :
+            t = {}
+            rank += 1
+            if( type == "Artist"):
+                t["artist"] = items.pop("name")
+            else:
+                t['artist'] = items.pop("artist")
+                t[type.lower()] = items.pop("name")
+            t["rank"] = rank 
+            chart_list.append(t)
+        self.storeChartItem(chart_list)
 
 if __name__ == '__main__':
-    parseUrls()
+    Rdio()

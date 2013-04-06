@@ -18,82 +18,62 @@
 # !!NOTE: PYTHONPATH to this project basedir need to be set,
 #       Eg. export PYTHONPATH=/path/to/src/
 
-import urllib2
-import json
+
 from scrapers import settings
+from scrapers.chart import Chart
 from sources.utils import cache as chartCache
-from scrapers.items import ChartItem, slugify
+from scrapers.items import slugify
 
-#@chartCache.methodcache.cache('parseUrls', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
-def parseUrls():
-    url = "http://ex.fm/api/v3/"
-    for baseType in ["explore", "trending"] :
-        if(baseType == "explore"):
-            for genre in ["indie", "electronica", "pop", "rock", "hip-hop", "folk", "blues", "metal", "reggae", "classical", "soul", "experimental", "house", "dubstep", "chillwave", "shoegaze", "punk", "country", "synthpop", "mashup"] :
-                parse(baseType, url+baseType+"/"+genre, genre)
-        else:
-            parse(baseType, url+baseType, None)
+class Exfm(Chart):
+    source_id = "ex.fm"
+    description = "Discover a pool of great music. Featuring tracks by genres, weekly mix-tapes, mashups and more."
+    baseUrl = "http://ex.fm/api/v3/"
+    genres = ["indie", "electronica", "pop", "rock", "hip-hop", "folk", "blues", "metal",
+             "reggae", "classical", "soul", "experimental", "house", "dubstep", "chillwave",
+             "shoegaze", "punk", "country", "synthpop", "mashup"
+    ]
 
-def parse(type_id, url, extra):
-    music_data = []
-    request = urllib2.Request(url)
-    response = urllib2.urlopen(request)
-    content = response.read().decode('utf-8')
-    jsonContent = json.loads(content)
+    def __init__(self):
+        Chart.__init__(self, self.source_id, self.description)
+        self.setChartType("Track")
+        self.setExpiresInDays(1)
+        self.parse()
 
-    chart_list = []
-    source = "ex.fm"
-    chart_type = "Track"
-    chart_name = type_id.title()+" "+ chart_type.title()+"s"
-    chart_id = type_id+chart_type.title()
-    if( extra != None ) :
-        chart_name += " "+extra.title()
-        chart_id += extra
+    def parse(self):
+        self.exfmType = "explore"
+        for genre in self.genres:
+            self.url = "%s%s/%s" % (self.baseUrl, self.exfmType, genre)
+            self.parseUrl(self.url, genre)
 
-    music_data.append( { "type":type_id, "charts": type_id+chart_type } )
+        self.exfmType = "trending"
+        self.setIsDefault(1)
+        self.url = "%s%s" % (self.baseUrl, self.exfmType)
+        self.parseUrl(self.url) 
 
-    print("Saving %s - %s" %(source, chart_id))
+    def parseUrl(self, url, extra = None):
+        self.setChartName("%s %ss" % (self.exfmType.title(), self.chart_type.title()))
+        self.setChartDisplayName(extra.title() if extra else self.exfmType.title())
+        self.setChartOrigin(url)
 
-    chart = ChartItem()
-    chart['name'] = chart_name
-    chart['source'] = source
-    chart['type'] = chart_type
-    chart['default'] = 1
+        if extra:
+            self.setChartName("%s %s" % (self.chart_name, extra))
+        self.setChartId(slugify(self.chart_name))
 
-    expires = chartCache.timedeltaUntilDays(1)
-    cacheControl = chartCache.setCacheControl(expires)
-    chart['date'] = cacheControl.get("Date-Modified")
-    chart['expires'] = cacheControl.get("Date-Expires")
-    chart['maxage'] = cacheControl.get("Max-Age")
+        jsonContent = self.getJsonContent(url)
 
-    chart['id'] = slugify(chart_id)
-    if( extra != None ) :
-        chart['genre'] = extra.title()
-        chart['default'] = 0
-    else:
-        chart['default'] = 1
-    chart['display_name'] = extra.title() if extra else "Trending"
-    rank = 0
-    for items in jsonContent['songs']:
-        t = {}
-        rank += 1
-        try:
-            t["artist"] = items.pop("artist").rstrip().strip()
-            t["track"] = items.pop("title").rstrip().strip()
-            t["rank"] = rank
-        except (AttributeError):
-            pass
-        chart_list.append(t)
-    chart['list'] = chart_list
+        chart_list = []
+        rank = 0
+        for items in jsonContent['songs']:
+            t = {}
+            rank += 1
+            try:
+                t["artist"] = items.pop("artist").rstrip().strip()
+                t["track"] = items.pop("title").rstrip().strip()
+                t["rank"] = rank
+            except (AttributeError):
+                pass
+            chart_list.append(t)
+        self.storeChartItem(chart_list)
 
-    # metadata is the chart item minus the actual list plus a size
-    metadata_keys = filter(lambda k: k != 'list', chart)
-    metadata = { key: chart[key] for key in metadata_keys }
-    metadata['size'] = len(chart_list)
-    metadatas = chartCache.storage.get(source, {})
-    metadatas[chart_id] = metadata
-    chartCache.storage[source] = metadatas
-    chartCache.storage[source+chart['id']] = dict(chart)
-    chartCache.storage[source+"cacheControl"] = dict(cacheControl)
 if __name__ == '__main__':
-    parseUrls()
+    Exfm()

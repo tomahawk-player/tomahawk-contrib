@@ -20,95 +20,61 @@
 
 import urllib2
 import json
-from datetime import datetime, timedelta
 from scrapers import settings
+from scrapers.chart import Chart
 from sources.utils import cache as chartCache
-from scrapers.items import ChartItem, slugify
 
-
-def secondsTillTomorrow():
-    today = datetime.utcnow()
-    expires = datetime.replace(today +  timedelta(days=1),hour=1, minute=0, second=0)
-    maxage = expires-today
-    return maxage.seconds
-
-@chartCache.methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
-def parse():
-
+class WeAreHunted(Chart):
+    source_id = "we are hunted"
+    description = "Publishes awesome music charts, recognised by industry insiders as the best source of new music in the world today."
     # https://gist.github.com/bencevans/5024457
     # http://spotifyapp.wearehunted.com/json/all/<chart type>.json
-    base = "http://spotifyapp.wearehunted.com/json/%s/%s.json"
-
+    baseUrl = "http://spotifyapp.wearehunted.com/json/%s/%s.json"
     types = [
-    ("all", "mainstream"),
-    ("all", "emerging"),
-    ("genre", "rock"),
-    ("genre", "alternative"),
-    ("genre", "pop"),
-    ("genre", "electronic"),
-    ("genre", "folk"),
-    ("genre", "metal"),
-    ("genre", "rap-hip-hop")
+        ("all", "mainstream"),
+        ("all", "emerging"),
+        ("genre", "rock"),
+        ("genre", "alternative"),
+        ("genre", "pop"),
+        ("genre", "electronic"),
+        ("genre", "folk"),
+        ("genre", "metal"),
+        ("genre", "rap-hip-hop")
     ]
 
-    for modifier, charttype in types:
-        url = base % (modifier, charttype)
+    def __init__(self):
+        Chart.__init__(self, self.source_id, self.description)
+        self.setExpiresInDays(1, 18)
+        self.parse()
 
-        request = urllib2.Request(url)
-        response = urllib2.urlopen(request)
-        content = response.read().decode('utf-8')
-        json_content = json.loads(content)
+    @chartCache.methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
+    def parse(self):
+        for modifier, charttype in self.types:
+            url = self.baseUrl % (modifier, charttype)
 
+            self.setChartName(charttype)
+            self.setChartType("Track")
+            self.setChartDisplayName(charttype.title())
+            self.setChartId("wah_%s" % charttype);
+            self.setIsDefault(1 if "Mainstream" in charttype else 0)
+            self.setChartOrigin(url)
+            chart_list = []
+            json_content = self.getJsonContent(url)
 
-        chart_list = []
-        source = "we are hunted"
-        content_type = "Track"
-        chart_name = source + " " + charttype
-        chart_id = "wah_" + charttype
+            rank = 0
+            for track in json_content['results']:
+                trackMap = {}
+                rank += 1
+                try:
+                    trackMap["artist"] = track["artist"].strip()
+                    trackMap["track"] = track["track"].strip()
+                    trackMap["rank"] = rank
+                except (AttributeError):
+                    pass
+                chart_list.append(trackMap)
 
-        print "Saving chart: %s - %s (%s)" % (source, charttype, slugify(chart_id))
-
-        chart = ChartItem()
-        chart['name'] = charttype.title()
-        chart['display_name'] = chart["name"] if chart["name"] else "Top Overall"
-        chart['source'] = source
-        chart['type'] = content_type
-        chart['default'] = 1 if "Mainstream" in chart["name"] else 0
-
-        # Seems to be updated each day at 6
-        expires = chartCache.timedeltaUntilDays(1, 18)
-        cacheControl = chartCache.setCacheControl(expires)
-
-        chart['date'] = cacheControl.get("Date-Modified")
-        chart['expires'] = cacheControl.get("Date-Expires")
-        chart['maxage'] = cacheControl.get("Max-Age")
-
-        chart['id'] = slugify(chart_id)
-
-        chart_list = []
-        rank = 0
-        for track in json_content['results']:
-            trackMap = {}
-            rank += 1
-            try:
-                trackMap["artist"] = track["artist"].strip()
-                trackMap["track"] = track["track"].strip()
-                trackMap["rank"] = rank
-            except (AttributeError):
-                pass
-            chart_list.append(trackMap)
-
-        chart['list'] = chart_list
-
-         # metadata is the chart item minus the actual list plus a size
-        metadata_keys = filter(lambda k: k != 'list', chart)
-        metadata = { key: chart[key] for key in metadata_keys }
-        metadata['size'] = len(chart_list)
-        metadatas = chartCache.storage.get(source, {})
-        metadatas[chart_id] = metadata
-        chartCache.storage[source] = metadatas
-        chartCache.storage[source+chart['id']] = dict(chart)
-        chartCache.storage[source+"cacheControl"] = dict(cacheControl)
+            # Stores this chart
+            self.storeChartItem(chart_list)
 
 if __name__ == '__main__':
-    parse()
+    WeAreHunted()

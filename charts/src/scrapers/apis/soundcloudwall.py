@@ -20,118 +20,97 @@ import datetime
 import urllib2
 import calendar
 import json
-from scrapers.items import ChartItem, slugify
+from scrapers import settings
+from scrapers.chart import Chart
 from sources.utils import cache as chartCache
+from scrapers.items import slugify
 
-EXPIRES = 365 #One year
-API_KEY = "TiNg2DRYhBnp01DA3zNag"
-BASE_TITLE = "100 Most Influential Tracks of "
+class Soundcloudwall(Chart):
+    source_id = "soundcloudwall"
+    description = "SoundCloudWall publishes a playlist of the 1000 most influential tracks on SoundCloud each month."
 
-def createUrl():
     #http://www.soundcloudwall.com/api/chart/<year>/<month>
     #http://www.soundcloudwall.com/api/chart/2011/october
-    base = "http://www.soundcloudwall.com/api/chart/"
-    now = datetime.datetime.now()
-    default = 0
-    for year in range(2011, now.year+1):
-        maxrange = now.month
-        minrange = 1
-        if( year == 2011 ):
-            maxrange = 12
-            minrange = 5
+    baseUrl = "http://www.soundcloudwall.com/api/chart/"
+    baseTitle = "100 Most Influential Tracks of"
+    apiKey = "TiNg2DRYhBnp01DA3zNag"
 
-        url = base + str(year)
-        
-        title = BASE_TITLE + str(year)
-        parseUrl(url, title, default)
-        for month in range(minrange,maxrange+1):
-            if( now.year == year and now.month == month):
-                default = 1
-            title = BASE_TITLE + calendar.month_name[month] + " " + str(year)
-            parseUrl( url + "/" + calendar.month_name[month], title, default )
+    def __init__(self):
+        Chart.__init__(self, self.source_id, self.description)
+        self.setExpiresInDays(365)
+        self.buildUrls()
 
-# We would like to store the cache forever, solution? For now, expire in one year
-@chartCache.methodcache.cache('parseUrl', expire=EXPIRES)
-def parseUrl(url, title, default):
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    content = the_page.decode('utf-8')
-    jsonContent = json.loads(content)
+    def buildUrls(self):
+        default = 0
+        self.setChartType("Track")
+        for year in range(2011, 2012+1):
+            max_monthrange = 12 if year is 2011 else 11
+            min_monthrange = 5 if year is 2011 else 1
 
-    if( len(jsonContent) != 0 ):
+            self.setChartName("%s %s" % (self.baseTitle, year))
+            self.setIsDefault(default)
+            self.url = "%s%s" % (self.baseUrl, year)
+            self.parse()
 
-        _type = "Track"
-        _id = slugify(title)
-        source = "soundcloudwall"
-        chart_id = source+_id
+            for month in range(min_monthrange,max_monthrange+1):
+                if( year == 2012 and month == max_monthrange):
+                    default = 1
+                self.setChartName("%s %s %s" % (self.baseTitle, calendar.month_name[month], year))
+                self.setIsDefault(default)
+                self.url = "%s%s/%s" % (self.baseUrl, year, calendar.month_name[month])
+                self.parse()
 
-        print("Saving %s - %s" %(source, chart_id))
+    def parse(self):
+        print "%s %s" % (self.chart_name, self.url)
+        self.setChartId(slugify(self.chart_name))
+        self.setChartDisplayName(self.chart_name)
+        self.setChartOrigin(self.url)
 
         chart_list = []
-        chart_name = title.title()
-        chart_type = _type
-        chart = ChartItem()
-        chart['name'] = chart_name
-        chart['display_name'] = chart_name if chart_name else "Top Overall"
-        chart['source'] = source
-        chart['type'] = chart_type
-        chart['id'] = _id
-        chart['default'] = default
-        expires = chartCache.timedeltaUntilDays(EXPIRES)
-        cacheControl = chartCache.setCacheControl(expires)
-        chart['date'] = cacheControl.get("Date-Modified")
-        chart['expires'] = cacheControl.get("Date-Expires")
-        chart['maxage'] = cacheControl.get("Max-Age")
 
-        rank = 0
-        count = 0;
-        for items in jsonContent:
-            item = {}
-            rank += 1
-            # We only take the first 100
-            if( count < 100):
-                # Soundcloud metadata is hard
-                try:
-                    item["track"] = items.pop("title").rstrip().strip()
+        jsonContent = self.getJsonContent(self.url)
+
+        if( len(jsonContent) != 0 ):
+            rank = 0
+            count = 0;
+            for items in jsonContent:
+                item = {}
+                rank += 1
+                # We only take the first 100
+                if( count < 100):
+                    # Soundcloud metadata is hard
                     try:
-                        item["artist"] = item["track"][:item["track"].index(" - ")]
-                        item["track"] = item["track"][item["track"].index(" - ")+3:]
-                    except (ValueError):
+                        item["track"] = items.pop("title").rstrip().strip()
                         try:
-                            item["artist"] = item["track"][:item["track"].index(" -")]
-                            item["track"] = item["track"][item["track"].index(" -")+2:]
+                            item["artist"] = item["track"][:item["track"].index(" - ")]
+                            item["track"] = item["track"][item["track"].index(" - ")+3:]
                         except (ValueError):
                             try:
-                                item["artist"] = item["track"][:item["track"].index(": ")]
-                                item["track"] = item["track"][item["track"].index(": ")+2:]
+                                item["artist"] = item["track"][:item["track"].index(" -")]
+                                item["track"] = item["track"][item["track"].index(" -")+2:]
                             except (ValueError):
                                 try:
-                                    item["artist"] = item["track"][:item["track"].index(":")]
-                                    item["track"] = item["track"][item["track"].index(":")+1:]
+                                    item["artist"] = item["track"][:item["track"].index(": ")]
+                                    item["track"] = item["track"][item["track"].index(": ")+2:]
                                 except (ValueError):
                                     try:
-                                        item["artist"] = item["track"][:item["track"].index("\u2014")]
-                                        item["track"] = item["track"][item["track"].index("\u2014")+1:]
+                                        item["artist"] = item["track"][:item["track"].index(":")]
+                                        item["track"] = item["track"][item["track"].index(":")+1:]
                                     except (ValueError):
-                                        item["artist"] = items.pop("username").rstrip().strip()
-                                        
-                    item["rank"] = rank
-                    item['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=%s" % (API_KEY)
-                except (AttributeError):
-                    pass
-                count += 1
-                chart_list.append(item)
-
-            chart['list'] = chart_list
-            metadata_keys = filter(lambda k: k != 'list', chart)
-            metadata = { key: chart[key] for key in metadata_keys }
-            metadata['size'] = len(chart_list)
-            metadatas = chartCache.storage.get(source, {})
-            metadatas[chart_id] = metadata
-            chartCache.storage[source] = metadatas
-            chartCache.storage[chart_id] = dict(chart)
-            chartCache.storage[source+"cacheControl"] = dict(cacheControl)
+                                        try:
+                                            item["artist"] = item["track"][:item["track"].index("\u2014")]
+                                            item["track"] = item["track"][item["track"].index("\u2014")+1:]
+                                        except (ValueError):
+                                            item["artist"] = items.pop("username").rstrip().strip()
+                                            
+                        item["rank"] = rank
+                        item['stream_url'] = "http://api.soundcloud.com/tracks/" + str(items.pop("id")) + "/stream.json?client_id=%s" % (self.apiKey)
+                    except (AttributeError):
+                        pass
+                    count += 1
+                    chart_list.append(item)
+        # Stores this chart
+        self.storeChartItem(chart_list)
 
 if __name__ == '__main__':
-    createUrl()
+    Soundcloudwall()
