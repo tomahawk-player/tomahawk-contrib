@@ -18,7 +18,13 @@ from utils import cache
 class Source(object):
     def __init__(self, name):
         self.name = name
+        self.details = "%sdetails" % name
+        self.cacheControl = "%scacheControl" % name
         return
+
+    def get_detailsForSource(self):
+        detail = cache.storage.get(self.details, None)
+        return detail if detail else cache.newreleases.get(self.details, None)
 
     def get_name(self):
         return self.name;
@@ -33,10 +39,10 @@ class Source(object):
         return cache.newreleases.get(self.name)
 
     def get_cacheControlForChart(self):
-        return cache.storage.get(self.name+"cacheControl", None)
+        return cache.storage.get(self.cacheControl, None)
 
     def get_cacheControlForRelease(self):
-        return cache.newreleases.get(self.name+"cacheControl", None)
+        return cache.newreleases.get(self.cacheControl, None)
 
     def get_newreleases(self, chart_id):
         return cache.newreleases.get(self.name+chart_id, None)

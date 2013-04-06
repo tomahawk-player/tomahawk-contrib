@@ -24,6 +24,7 @@ Contains information regarding caching behavior
 from datetime import datetime, timedelta
 import dateutil.relativedelta as reldate
 from beaker.cache import CacheManager
+from scrapers.items import DetailItem
 from beaker.util import parse_cache_config_options
 import shove
 import os
@@ -69,6 +70,12 @@ def setCacheControl(delta):
         "Date-Modified" : today.strftime("%a, %d %b %Y %H:%M:%S +0000"),
         "Date-Expires" : expires.strftime("%a, %d %b %Y %H:%M:%S +0000")
     }
+
+def shoveDetails(details, isChart = True):
+    if isChart:
+        storage["%s%s" % (details.get('id'), "details")] = dict(details)
+    else:
+        newreleases["%s%s" % (details.get('id'), "details")] = dict(details)
 
 def appendCacheHeader(source, response, isChart = True):
     if isChart:
