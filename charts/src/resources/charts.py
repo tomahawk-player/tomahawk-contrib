@@ -96,7 +96,9 @@ def source(id):
     charts = details.filterChart(request.args, charts);
 
     # Append details?
-    charts.update(details.getDetail(request, id));
+    detailed = details.getDetail(request, id);
+    if detailed:
+        charts.update(detailed);
 
     response = make_response(jsonify(charts))
     response = cache.appendCacheHeader(source, response)
