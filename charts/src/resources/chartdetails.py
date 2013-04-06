@@ -22,65 +22,21 @@ import re
 class ChartDetails():
     __bcVersion = '0.6.99'
     __baseImageUrl = 'http://hatchet.is/images/'
+    # A list of backward compatible sources, that means no NEW sources with Geo/Extra/Genre
+    __generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'we are hunted']
+    # A list of new sources, that is not compatible with < 0.6.99.
+    __generic_non_compatible_sources = ['hotnewhiphop', 'djshop.de']
 
-    '''
-        bcList is a list of backward compatible sources, that means no NEW sources with Geo/Extra/Genre types!
-        ONLY
-            [Source] - Album - Chart
-            [Source] - Track - Chart
-    '''
-    __bcList = {}
-
-    '''
-        sourceList has sources that can be added to Tomahawk versions greater than stable-0.6.1 and from master-0.6.99 and onwards
-        That means, charts that requires Tomahawk to be updated, to enable Geo/Extra/Genre types!
-        ONLY
-            [Source] - [GEO]    - [Type] - Chart
-                       [EXTRA]  - [Type] - Chart
-    '''
-    __sourceList = {}
-
-    '''
-        Add sources, if no Name is given, a titled id will be used as prettyName.
-        Specify wether the chart have extras (geo, genre, extra)
-    '''
     def __init__(self):
-        self.update(self.__bcList, id = "itunes", name = "iTunes", desc = "Updated daily, browse what currently hot on Itunes. Includes albums, tracks by genre.", extra = True)
-        self.update(self.__bcList, id = "billboard", desc = "The week's top-selling and most played albums and tracks across all genres, ranked by sales data and radio airtime as compiled by Nielsen.")
-        self.update(self.__bcList, id = "soundcloudwall",  desc = "SoundCloudWall publishes a playlist of the 1000 most influential tracks on SoundCloud each month.")
-        self.update(self.__bcList, id = "we are hunted", desc = "Publishes awesome music charts, recognised by industry insiders as the best source of new music in the world today.")
-        self.update(self.__bcList, id = "rdio",  desc = "Hear the music that is most popular on Rdio right now, features todays top albums, tracks and artists.", extra = True)
-        self.update(self.__bcList, id = "ex.fm", desc = "Discover a pool of great music. Featuring tracks by genres, weekly mix-tapes, mashups and more.")
-
-        self.update(self.__sourceList, id = "djshop.de", name = "djShop.de", desc = "Updated daily with what's currently hot on the electronic scene.", extra = True)
-        self.update(self.__sourceList, id = "hotnewhiphop",  name = "HotNewHipHop", desc = "Real hip-hop fans collaborates to create HotNewHiphops's daily updated charts.", extra = True)
-
-        # Build!
-        self.__sourceList.update(self.__bcList);
-
-    def update(self, dest, id = None, name = None, desc = None, extra = False ):
-        if not name :
-            name = self.__titlecase__(id)
-        dest.update(self.__detail(id, name, desc, extra))
-
-    def __detail(self, id = None, name = None, desc = None, extra = False):
-        return { id: {
-                    'id' : id, 
-                    'name' : name, 
-                    'description' : desc, 
-                    'image' : "%s%s-logo.png" % (self.__baseImageUrl, id ),
-                    'have_extra' : extra
-                }
-              }
-
-    def __titlecase__(self, s):
-        return re.sub(r"[A-Za-z]+(['.][A-Za-z]+)?",
-                   lambda mo: mo.group(0)[0].upper() +
-                              mo.group(0)[1:].lower(),
-                   s)
+        # Build sources
+        self.__backward_comp_size = len(self.__generic_sources)
+        self.__generic_sources = self.__generic_sources + self.__generic_non_compatible_sources
 
     def __sources(self, sources):
-        return { source: Source(source) for source in sources.keys() }
+        return { source: Source(source) for source in sources }
+
+    def __details(self, sources):
+        return [ Source(source).get_detailsForSource() for source in sources ]
 
     def backwardComp(self, args):
         version = str(args.get('version'))
@@ -90,27 +46,21 @@ class ChartDetails():
 
     def getSources(self, request):
         if not self.backwardComp(request.args):
-            return self.__sources(self.__bcList)
-        return self.__sources(self.__sourceList)
+            return self.__sources(self.__generic_sources[:self.__backward_comp_size])
+        return self.__sources(self.__generic_sources)
 
     def getDetail(self, request, id):
-        list = {};
-        if not self.backwardComp(request.args):
-            list = self.__bcList;
-        else :
-            list = self.__sourceList;
-
-        try:
-            return {"details" : list.get(id) };
-        except IndexError:
-            return {};
+        if self.backwardComp(request.args):
+            return { 'details' : Source(id).get_detailsForSource() }
+        return None
 
     def getDetails(self, request):
         if not self.backwardComp(request.args):
-            return self.__bcList;
-        return self.__sourceList
+            return self.__details(self.__generic_sources[:6])
+        return self.__details(self.__generic_sources)
 
     def filterChart(self, args, chart):
+        # Ensure that we have plural form for Type > 0.6.99
         if self.backwardComp(args):
             for attr, item in chart.iteritems():
                 if 'type' in item and not item['type'].endswith("s"):
@@ -125,3 +75,5 @@ class ChartDetails():
                 chart = { itemkey: item for itemkey, item in chart.iteritems() if fkey in item and item[fkey] in filters[fkey] }
 
         return chart
+
+
