@@ -30,7 +30,7 @@ from urlparse import urlparse as urlparser
 from scrapy.conf import settings
 from scrapy import log
 from scrapy.spider import BaseSpider
-from scrapers.items import SingleTrackItem, SingleAlbumItem, ChartItem
+from scrapers.items import SingleTrackItem, SingleAlbumItem, DetailItem, Detail, ChartItem
 
 from sources.utils import cache as chartCache
 
@@ -98,7 +98,7 @@ def construct_feeds(music_feeds, limit):
                 url = "%s/limit=%s/genre=%s/cc=%s/%s" % (base_url, limit, g_id, item['cc'], suffix)
                 feeds.append(url)
     # Only return US new releases
-    return filter(lambda url: 'rss.xml' in url and "US" in url or 'rss.xml' not in url, feeds)
+    return filter(lambda url: "US" in url, feeds)
 
 def get_feed_urls(limit):
     feeds = construct_feeds(get_music_feeds(get_countries()), limit)
@@ -108,6 +108,23 @@ class ItunesSpider(BaseSpider):
     name = 'itunes.com'
     allowed_domains = ['itunes.com']
     start_urls = get_feed_urls(settings['ITUNES_LIMIT'])
+
+    source_id = "itunes"
+    source_name = "iTunes"
+    description = "Updated daily, browse what currently hot on Itunes. Includes albums, tracks by genre."
+    have_extra = True
+
+    details = DetailItem(Detail(
+        id = source_id, 
+        description = description,
+        name = source_name,
+        have_extra = have_extra
+        )
+    );
+
+    def __init__(self, name=None, **kwargs):
+        super(ItunesSpider, self).__init__()
+        chartCache.shoveDetails(self.details)
 
     def parse(self, response):
         try:

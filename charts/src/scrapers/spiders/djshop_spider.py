@@ -24,7 +24,7 @@ from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
 from scrapy import log
-from scrapers.items import ChartItem, SingleAlbumItem, slugify
+from scrapers.items import ChartItem, SingleAlbumItem, DetailItem, Detail, slugify
 from sources.utils import cache as chartCache
 import re
 import urllib2
@@ -47,9 +47,21 @@ class DjShopSpider(CrawlSpider):
     expires = chartCache.timedeltaUntilDays(2)
     cacheControl = chartCache.setCacheControl(expires)
 
+    source_id = "djshop.de"
+    source_name = "djShop.de"
+    description = "Updated daily with what's currently hot on the electronic scene."
+    have_extra = True
+    details = DetailItem(Detail(
+        id = source_id, 
+        description = description,
+        name = source_name,
+        have_extra = have_extra
+        )
+    );
 
     def __init__(self, name=None, **kwargs):
         super(DjShopSpider, self).__init__()
+        chartCache.shoveDetails(self.details)
         self.get_chart_urls()
 
     def get_chart_urls(self):

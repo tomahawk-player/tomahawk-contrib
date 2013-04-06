@@ -24,7 +24,7 @@ from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
 from scrapy import log
-from scrapers.items import ChartItem, SingleTrackItem, SingleAlbumItem, SingleArtistItem, slugify
+from scrapers.items import ChartItem, SingleTrackItem, DetailItem, Detail, SingleAlbumItem, SingleArtistItem, slugify
 from collections import deque
 from sources.utils import cache as chartCache
 
@@ -51,6 +51,18 @@ class BillboardSpider(CrawlSpider):
 
     expires = chartCache.timedeltaUntilWeekday(EXPIRES_DAY, EXPIRES_HOUR)
     cacheControl = chartCache.setCacheControl(expires)
+    
+    source_id = "billboard"
+    description = "The week's top-selling and most played albums and tracks across all genres, ranked by sales data and radio airtime as compiled by Nielsen."
+    details = DetailItem(Detail(
+        id = source_id, 
+        description = description,
+        )
+    );
+    
+    def __init__(self, name=None, **kwargs):
+        super(BillboardSpider, self).__init__()
+        chartCache.shoveDetails(self.details)
 
     def parse_chart(self, response):
         hxs = HtmlXPathSelector(response)

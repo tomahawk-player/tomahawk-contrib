@@ -24,7 +24,7 @@ from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.loader import XPathItemLoader
 from scrapy.http import Request
 from scrapy import log
-from scrapers.items import ChartItem, SingleUrlAlbumItem, SingleUrlTrackItem, slugify
+from scrapers.items import ChartItem, SingleUrlAlbumItem, DetailItem, Detail, SingleUrlTrackItem, slugify
 from collections import deque
 from sources.utils import cache as chartCache
 
@@ -44,6 +44,22 @@ class HNHHSpider(CrawlSpider):
         "http://www.hotnewhiphop.com/top100/mixtape/mainstream/alltime/1",
 
     ]
+    source_id = "hotnewhiphop"
+    source_name = "HotNewHipHop"
+    description = "Real hip-hop fans collaborates to create HotNewHiphops's daily updated charts."
+    have_extra = True
+
+    details = DetailItem(Detail(
+        id = source_id, 
+        description = description,
+        name = source_name,
+        have_extra = have_extra
+        )
+    );
+
+    def __init__(self, name=None, **kwargs):
+        super(HNHHSpider, self).__init__()
+        chartCache.shoveDetails(self.details)
 
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
