@@ -26,21 +26,86 @@ from scrapers.items import ChartItem, DetailItem, Detail, slugify
 class Chart(object):
     # This is backward compatible, Types must be singular
     __types = {'album' : 'Album','track' : 'Track','artist' : 'Artist'}
-    def __init__(self, id, desc, have_extra = False):
+    def __init__(self):
+        try:
+            self.prettyName
+        except AttributeError:
+            self.prettyName = None
+
+        if self.is_chart:
+            self.storage = chartCache.storage
+        else:
+            self.storage = chartCache.newreleases
+
         self.details = DetailItem(Detail(
-            id = id, 
-            description = desc,
-            have_extra = have_extra
+            id = self.source_id,
+            name = self.prettyName,
+            description = self.description,
+            have_extra = self.have_extra
             )
         );
-        chartCache.shoveDetails(self.details)
-        self.have_extra = have_extra
+        chartCache.shoveDetails(self.details, self.is_chart)
+        self.have_extra = self.have_extra
+
+        #Chart specific optional attributes
         self.geo = None
         self.extra = None
         self.genre = None
         self.source_id = self.details.get('id')
         self.cache_id = "%scacheControl" % self.source_id
         self.default = 0
+
+        self.init()
+        self.parse()
+
+    def __getCacheControl(self):
+        self.cacheControl = chartCache.setCacheControl(self.expires)
+
+    def __createChartItem(self):
+        try:
+            chart = ChartItem(
+                id = slugify(self.chart_id),
+                name = self.chart_name,
+                display_name = self.display_name,
+                origin = self.origin,
+                type = self.chart_type,
+                default = self.default,
+                source = self.source_id,
+                date = self.cacheControl.get("Date-Modified"),
+                expires = self.cacheControl.get("Date-Expires"),
+                maxage = self.cacheControl.get("Max-Age"),
+                list = self.chart_list
+            )
+        except AttributeError:
+            print "ChartItem is missing required attributes!"
+            raise
+
+        if self.have_extra :
+            if self.geo is not None:
+                chart['geo'] = self.geo
+            if self.genre is not None:
+                chart['genre'] = self.genre
+            if self.extra is not None:
+                chart['extra'] = self.extra
+
+        return chart
+
+    def __updateCache(self, metadata, chart):
+        data = self.storage.get(self.source_id, {})
+        data[self.chart_id] = metadata
+        self.storage[self.source_id] = data
+        self.storage[self.source_id+self.chart_id] = dict(chart)
+        self.storage[self.cache_id] = dict(self.cacheControl)
+
+    def __createMetadata(self, chart):
+        # metadata is the chart item minus the actual list plus a size
+        metadata_keys = filter(lambda k: k != 'list', chart)
+        metadata = { key: chart[key] for key in metadata_keys }
+        metadata['size'] = len(self.chart_list)
+        return metadata
+
+    def init(self):
+        raise NotImplementedError( "Scraper needs to implement this!")
 
     def parse(self):
         raise NotImplementedError( "Scraper needs to implement this!")
@@ -93,48 +158,6 @@ class Chart(object):
     def getJsonFromResponse(self, response):
         content = response.decode('utf-8')
         return json.loads(content)
-
-    def __getCacheControl(self):
-        self.cacheControl = chartCache.setCacheControl(self.expires)
-
-    def __createChartItem(self):
-        chart = ChartItem(
-            id = slugify(self.chart_id),
-            name = self.chart_name,
-            display_name = self.display_name,
-            origin = self.origin,
-            type = self.chart_type,
-            default = self.default,
-            source = self.source_id,
-            date = self.cacheControl.get("Date-Modified"),
-            expires = self.cacheControl.get("Date-Expires"),
-            maxage = self.cacheControl.get("Max-Age"),
-            list = self.chart_list
-        )
-
-        if self.have_extra :
-            if self.geo is not None:
-                chart['geo'] = self.geo
-            if self.genre is not None:
-                chart['genre'] = self.genre
-            if self.extra is not None:
-                chart['extra'] = self.extra
-
-        return chart
-
-    def __updateCache(self, metadata, chart):
-        data = chartCache.storage.get(self.source_id, {})
-        data[self.chart_id] = metadata
-        chartCache.storage[self.source_id] = data
-        chartCache.storage[self.source_id+self.chart_id] = dict(chart)
-        chartCache.storage[self.cache_id] = dict(self.cacheControl)
-
-    def __createMetadata(self, chart):
-        # metadata is the chart item minus the actual list plus a size
-        metadata_keys = filter(lambda k: k != 'list', chart)
-        metadata = { key: chart[key] for key in metadata_keys }
-        metadata['size'] = len(self.chart_list)
-        return metadata
 
     def storeChartItem(self, chart_list):
         print "Saving chart: %s - %s (%s) : %s" % (self.source_id, self.chart_type, slugify(self.chart_id), self.display_name)
