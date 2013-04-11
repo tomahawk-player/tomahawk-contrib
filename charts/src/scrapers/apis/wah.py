@@ -27,6 +27,7 @@ from sources.utils import cache as chartCache
 class WeAreHunted(Chart):
     source_id = "we are hunted"
     description = "Publishes awesome music charts, recognised by industry insiders as the best source of new music in the world today."
+    have_extra = False
     # https://gist.github.com/bencevans/5024457
     # http://spotifyapp.wearehunted.com/json/all/<chart type>.json
     baseUrl = "http://spotifyapp.wearehunted.com/json/%s/%s.json"
@@ -42,12 +43,9 @@ class WeAreHunted(Chart):
         ("genre", "rap-hip-hop")
     ]
 
-    def __init__(self):
-        Chart.__init__(self, self.source_id, self.description)
+    def init(self):
         self.setExpiresInDays(1, 18)
-        self.parse()
 
-    @chartCache.methodcache.cache('parse', expire=settings.GLOBAL_SETTINGS['EXPIRE'])
     def parse(self):
         for modifier, charttype in self.types:
             url = self.baseUrl % (modifier, charttype)
@@ -61,10 +59,8 @@ class WeAreHunted(Chart):
             chart_list = []
             json_content = self.getJsonContent(url)
 
-            rank = 0
-            for track in json_content['results']:
+            for rank, track in enumerate(json_content['results']):
                 trackMap = {}
-                rank += 1
                 try:
                     trackMap["artist"] = track["artist"].strip()
                     trackMap["track"] = track["track"].strip()

@@ -28,19 +28,17 @@ from scrapers.items import slugify
 class Soundcloudwall(Chart):
     source_id = "soundcloudwall"
     description = "SoundCloudWall publishes a playlist of the 1000 most influential tracks on SoundCloud each month."
-
+    have_extra = False
     #http://www.soundcloudwall.com/api/chart/<year>/<month>
     #http://www.soundcloudwall.com/api/chart/2011/october
     baseUrl = "http://www.soundcloudwall.com/api/chart/"
     baseTitle = "100 Most Influential Tracks of"
     apiKey = "TiNg2DRYhBnp01DA3zNag"
 
-    def __init__(self):
-        Chart.__init__(self, self.source_id, self.description)
+    def init(self):
         self.setExpiresInDays(365)
-        self.buildUrls()
 
-    def buildUrls(self):
+    def parse(self):
         default = 0
         self.setChartType("Track")
         for year in range(2011, 2012+1):
@@ -50,7 +48,7 @@ class Soundcloudwall(Chart):
             self.setChartName("%s %s" % (self.baseTitle, year))
             self.setIsDefault(default)
             self.url = "%s%s" % (self.baseUrl, year)
-            self.parse()
+            self.parseUrl()
 
             for month in range(min_monthrange,max_monthrange+1):
                 if( year == 2012 and month == max_monthrange):
@@ -58,9 +56,9 @@ class Soundcloudwall(Chart):
                 self.setChartName("%s %s %s" % (self.baseTitle, calendar.month_name[month], year))
                 self.setIsDefault(default)
                 self.url = "%s%s/%s" % (self.baseUrl, year, calendar.month_name[month])
-                self.parse()
+                self.parseUrl()
 
-    def parse(self):
+    def parseUrl(self):
         print "%s %s" % (self.chart_name, self.url)
         self.setChartId(slugify(self.chart_name))
         self.setChartDisplayName(self.chart_name)
@@ -73,9 +71,8 @@ class Soundcloudwall(Chart):
         if( len(jsonContent) != 0 ):
             rank = 0
             count = 0;
-            for items in jsonContent:
+            for rank, items in enumerate(jsonContent):
                 item = {}
-                rank += 1
                 # We only take the first 100
                 if( count < 100):
                     # Soundcloud metadata is hard

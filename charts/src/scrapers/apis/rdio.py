@@ -42,12 +42,10 @@ class Rdio(Chart):
     # We are gonna skip playlist here, cuz its crazy, and returns one playlist, like iTunes Top 200 U.S. 11-01-11 for instance. Baaad
     baseTypes = ["Artist", "Album", "Track"]
 
-    def __init__(self):
-        Chart.__init__(self, self.source_id, self.description, self.have_extra)
+    def init(self):
         self.setChartName("Top Overall")
         self.setChartDisplayName(self.chart_name)
         self.setExpiresInDays(1)
-        self.parse()
 
     def parse(self):
         for baseType in self.baseTypes :
@@ -75,10 +73,8 @@ class Rdio(Chart):
         jsonContent = self.getJsonFromResponse(contents)
 
         chart_list = []
-        rank = 0
-        for items in jsonContent['result'] :
+        for rank, items in enumerate(jsonContent['result']) :
             t = {}
-            rank += 1
             if( type == "Artist"):
                 t["artist"] = items.pop("name")
             else:

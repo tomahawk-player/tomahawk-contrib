@@ -27,17 +27,16 @@ from scrapers.items import slugify
 class Exfm(Chart):
     source_id = "ex.fm"
     description = "Discover a pool of great music. Featuring tracks by genres, weekly mix-tapes, mashups and more."
+    have_extra = False
     baseUrl = "http://ex.fm/api/v3/"
     genres = ["indie", "electronica", "pop", "rock", "hip-hop", "folk", "blues", "metal",
              "reggae", "classical", "soul", "experimental", "house", "dubstep", "chillwave",
              "shoegaze", "punk", "country", "synthpop", "mashup"
     ]
 
-    def __init__(self):
-        Chart.__init__(self, self.source_id, self.description)
+    def init(self):
         self.setChartType("Track")
         self.setExpiresInDays(1)
-        self.parse()
 
     def parse(self):
         self.exfmType = "explore"
@@ -62,10 +61,8 @@ class Exfm(Chart):
         jsonContent = self.getJsonContent(url)
 
         chart_list = []
-        rank = 0
-        for items in jsonContent['songs']:
+        for rank, items in enumerate(jsonContent['songs']):
             t = {}
-            rank += 1
             try:
                 t["artist"] = items.pop("artist").rstrip().strip()
                 t["track"] = items.pop("title").rstrip().strip()
