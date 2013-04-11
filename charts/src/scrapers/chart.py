@@ -32,10 +32,7 @@ class Chart(object):
         except AttributeError:
             self.prettyName = None
 
-        if self.is_chart:
-            self.storage = chartCache.storage
-        else:
-            self.storage = chartCache.newreleases
+        self.__setStorage()
 
         self.details = DetailItem(Detail(
             id = self.source_id,
@@ -57,6 +54,16 @@ class Chart(object):
 
         self.init()
         self.parse()
+
+    def __setStorage(self):
+        try:
+            if self.is_chart:
+                self.storage = chartCache.storage
+            else:
+                self.storage = chartCache.newreleases
+        except AttributeError:
+            self.is_chart = True
+            self.storage = chartCache.storage
 
     def __getCacheControl(self):
         self.cacheControl = chartCache.setCacheControl(self.expires)
