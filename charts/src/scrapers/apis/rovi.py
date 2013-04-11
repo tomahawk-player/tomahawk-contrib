@@ -21,186 +21,165 @@ import datetime
 from operator import itemgetter
 import urllib, urllib2
 import md5
-import json
-from scrapers.items import ChartItem, slugify
+from scrapers.chart import Chart
 from sources.utils import cache as chartCache
-from scrapers import settings
+from scrapers.items import slugify
+import re
 
-API_URI = "http://api.rovicorp.com/"
-KEY = "7jxr9zggt45h6rg2n4ss3mrj"
-SECRET = "XUnYutaAW6"
-DAYS_AGO = 365
-MAX_ALBUMS = 50
-SOURCE = "rovi"
-
-# Expires in one day
-EXPIRES = 1
-
-def make_sig():
-    pre_sig = KEY+SECRET+str(int(time()))
-    m = md5.new()
-    m.update(pre_sig)
-    return m.hexdigest()
-
-def sign_args(args):
-    args['apikey'] = KEY
-    args['sig'] = make_sig()
-    return args
-
-def request(method, args, additionalValue=None):
-    args = sign_args(args);
-    url = "%s%s?%s%s" % (API_URI, method, urllib.urlencode(args), additionalValue if additionalValue is not None else "" )
-    print("fetching: " + url)
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    content = the_page.decode('utf-8')
-    try :
-        return json.loads(content)
-    except Exception :
-        return {}
-
-@chartCache.methodcache.cache('fetch_genres', expire=EXPIRES)
-def fetch_genres():
-    method = "data/v1/descriptor/musicgenres"
-    args = {
-        "country": "US",
-        "format": "json",
-        "language": "en"
-    }
-    j = request(method, args)
-    try:
-        if j['status'].strip() != "ok":
-            return None
-    except KeyError:
-        return None
-
-    return [ (item['id'], item['name']) for item in j['genres'] ]
-
-def fetch_neweditorials(genre):
-
-    method = "search/v2/music/filterbrowse"
-    args = {
+class Rovi(Chart):
+    source_id = "rovi"
+    description = "Enjoy the latest music gathered by Rovi Corp."
+    have_extra = True
+    is_chart = False
+    baseUrl = "http://api.rovicorp.com/"
+    apiKey = "7jxr9zggt45h6rg2n4ss3mrj"
+    apiSecret = "XUnYutaAW6"
+    daysAgo = 365
+    maxAlbums = 100
+    baseArgs = {
         "entitytype": "album",
         "facet": "genre",
-        "filter": "genreid:%s" % (genre[0]),
-        "size": "200",
-        "offset": "0",
-        "country": "US",
-        "format": "json"
-    }
-    print("fetching new editorials for %s within %s" % (genre, datetime.datetime.now().year-1))
-    j = request(method, args,"&filter=releaseyear>:%s%s" % (datetime.datetime.now().year-1, "&filter=editorialrating>:7"))
-    try:
-        status = j['searchResponse']['controlSet']['status'].strip()
-        if status != "ok":
-            return None
-    except KeyError:
-        return None;
-
-    return j['searchResponse']['results']
-
-def fetch_newreleases(genre):
-    method = "search/v2/music/filterbrowse"
-    args = {
-        "entitytype": "album",
-        "facet": "genre",
-        "filter": "genreid:%s" % (genre[0]),
         "size": "1000",
         "offset": "0",
         "country": "US",
         "format": "json"
     }
-    print("fetching new releases for %s within %s" % (genre, datetime.datetime.now().year-1))
-    print args
-    j = request(method, args,"&filter=releaseyear>:%s" % (datetime.datetime.now().year-1))
-    try:
-        status = j['searchResponse']['controlSet']['status'].strip()
-        if status != "ok":
-            return None
-    except KeyError:
-        return None;
+    def init(self):
+        self.setExpiresInDays(1)
 
-    return j['searchResponse']['results']
+    def parse(self):
+        for genre in self.fetch_genres():
+            self.parse_albums("%s" %(genre[1]), self.fetch_newreleases(genre), False)
+            self.parse_albums("%s" %(genre[1]), self.fetch_neweditorials(genre), True)
 
-def parse_albums(name, albums, isEditorial ):
-    if albums is None:
-        # something went wrong
-        return
-    chart_list =  []
-    nullList = []
-    for album in albums:
+    def __make_sig(self):
+        pre_sig = self.apiKey+self.apiSecret+str(int(time()))
+        m = md5.new()
+        m.update(pre_sig)
+        return m.hexdigest()
+
+    def __sign_args(self, args):
+        args['apikey'] = self.apiKey
+        args['sig'] = self.__make_sig()
+        return args
+
+    def __request(self, method, args, additionalValue=None):
+        args = self.__sign_args(args);
+        url = "%s%s?%s%s" % (self.baseUrl, method, urllib.urlencode(args), additionalValue if additionalValue is not None else "" )
+        self.setChartOrigin(url)
+        print("fetching: " + url)
+        return self.getJsonContent(url)
+
+    @chartCache.methodcache.cache('fetch_genres', expire=86400)
+    def fetch_genres(self):
+        method = "data/v1/descriptor/musicgenres"
+        args = {
+            "country": "US",
+            "format": "json",
+            "language": "en"
+        }
+        j = self.__request(method, args)
         try:
-            album = album['album']
-            title = album['title']
-            artist = " ".join([ artist['name'] for artist in album['primaryArtists'] ])
-            release_date = album['originalReleaseDate']
-            rating = album['rating']
-            # instead of filter out by releasedate, we search the api by releaseyear
-            # the result seems to be more appealing
-            # Note: some albums have Null releaseDate, this doesnt necessarily mean
-            # that the release date isnt within our range. We include some of them as well
-            if release_date is not None :
-                chart_list.append (
-                    {'album': title,
-                     'artist': artist,
-                     'date': release_date,
-                     'rating': rating
-                 })
-            else :
-                nullList.append (
-                   {'album': title,
-                    'artist': artist,
-                    'date': release_date,
-                    'rating': rating
-                })
-        except :
-            continue
+            if j['status'].strip() != "ok":
+                return None
+        except KeyError:
+            return None
 
-    if(len(nullList) > MAX_ALBUMS):
-        print("Slicing NUllList from %s to %s" %(len(nullList), MAX_ALBUMS))
-        nullList = nullList[-MAX_ALBUMS:]
+        return [ (item['id'], item['name']) for item in j['genres'] ]
 
-    chart_list = sorted(chart_list, key=itemgetter('date'))
-    if(len(chart_list) > MAX_ALBUMS):
-        print("Slicing list from %s to %s" %(len(chart_list), MAX_ALBUMS))
-        chart_list = chart_list[-MAX_ALBUMS:]
+    def fetch_neweditorials(self, genre):
+        method = "search/v2/music/filterbrowse"
+        args = self.baseArgs
+        args["filter"] = "genreid:%s" % (genre[0])
+        print("fetching new editorials for %s within %s" % (genre, datetime.datetime.now().year-1))
+        j = self.__request(method, args,"&filter=releaseyear>:%s%s" % (datetime.datetime.now().year-1, "&filter=editorialrating>:7"))
+        try:
+            status = j['searchResponse']['controlSet']['status'].strip()
+            if status != "ok":
+                return None
+        except KeyError:
+            return None;
 
-    _list = nullList + chart_list
-    _id = name
-    if isEditorial :
-        chart_list = sorted(chart_list, key=itemgetter('rating'))
-        _id = "editorial"+_id
+        return j['searchResponse']['results']
 
-    chart_id = slugify(_id)
-    chart = ChartItem()
-    chart['name'] = name
-    chart['source'] = SOURCE
-    chart['type'] = "Album"
-    chart['default'] = 1
-    chart['id'] = chart_id
-    chart['list'] = chart_list
+    def fetch_newreleases(self, genre):
+        method = "search/v2/music/filterbrowse"
+        args = self.baseArgs
+        args["filter"] = "genreid:%s" % (genre[0])
+        print("fetching new releases for %s within %s" % (genre, datetime.datetime.now().year-1))
+        j = self.__request(method, args,"&filter=releaseyear>:%s" % (datetime.datetime.now().year-1))
+        try:
+            status = j['searchResponse']['controlSet']['status'].strip()
+            if status != "ok":
+                return None
+        except KeyError:
+            return None;
 
-    expires = chartCache.timedeltaUntilDays(EXPIRES)
-    cacheControl = chartCache.setCacheControl(expires)
-    chart['date'] = cacheControl.get("Date-Modified")
-    chart['expires'] = cacheControl.get("Date-Expires")
-    chart['maxage'] = cacheControl.get("Max-Age")
+        return j['searchResponse']['results']
 
-    # metadata is the chart item minus the actual list plus a size
-    metadata_keys = filter(lambda k: k != 'list', chart)
-    metadata = { key: chart[key] for key in metadata_keys }
-    metadata['size'] = len(chart_list)
-    if isEditorial is True :
-        metadata['extra'] = "Editorial Choices"
-    metadatas = chartCache.newreleases.get(SOURCE, {})
-    metadatas[chart_id] = metadata
-    chartCache.newreleases[SOURCE] = metadatas
-    chartCache.newreleases[SOURCE+chart_id] = dict(chart)
-    chartCache.newreleases[SOURCE+"cacheControl"] = dict(cacheControl)
-    
+    def parse_albums(self, name, albums, isEditorial ):
+        if albums is None:
+            # something went wrong
+            return
+
+        self.setChartName(name)
+        self.setChartDisplayName(name)
+        self.setChartType("Album")
+        self.setChartId(slugify("%s%s" % (self.source_id, name) if isEditorial is True else "%seditorial %s" % (self.source_id,name)))
+        self.setChartExtra("Editorial Choices") if isEditorial else self.setChartExtra(None)
+
+        chart_list =  []
+        nullList = []
+        for album in albums:
+            try:
+                album = album['album']
+                title = album['title']
+                artist = " ".join([ artist['name'] for artist in album['primaryArtists'] ])
+                try:
+                    review = album['headlineReview']
+                    try:
+                        review['text'] = re.sub(r'((\[roviLink=.+])(.*?)(\[/roviLink]))', r'\3', review['text'])
+                    except Exception,e:
+                        print e
+                except Exception:
+                    review = None
+
+                release_date = album['originalReleaseDate']
+                rating = album['rating']
+                # instead of filter out by releasedate, we search the api by releaseyear
+                # the result seems to be more appealing
+                # Note: some albums have Null releaseDate, this doesnt necessarily mean
+                # that the release date isnt within our range. We include some of them as well
+                if release_date is not None :
+                    chart_list.append (
+                        {'album': title,
+                         'artist': artist,
+                         'date': release_date,
+                         'rating': rating,
+                         'review' : review
+                     })
+                else :
+                    nullList.append (
+                       {'album': title,
+                        'artist': artist,
+                        'date': release_date,
+                        'rating': rating,
+                         'review' : review
+                    })
+            except :
+                continue
+
+        if(len(nullList) > self.maxAlbums):
+            print("Slicing NUllList from %s to %s" %(len(nullList), self.maxAlbums))
+            nullList = nullList[-self.maxAlbums:]
+
+        chart_list = sorted(chart_list, key=itemgetter('date'))
+        if(len(chart_list) > self.maxAlbums):
+            print("Slicing list from %s to %s" %(len(chart_list), self.maxAlbums))
+            chart_list = chart_list[-self.maxAlbums:]
+
+        _list = nullList + chart_list
+        self.storeChartItem(_list)
 
 if __name__ == '__main__':
-    for genre in fetch_genres():
-        parse_albums("%s" %(genre[1]), fetch_newreleases(genre), False)
-        parse_albums("%s" %(genre[1]), fetch_neweditorials(genre), True)
+    Rovi()
