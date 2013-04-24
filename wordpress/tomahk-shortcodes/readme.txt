@@ -1,5 +1,5 @@
 === Tomahk Shortcodes ===
-Contributors: grosbouff
+Contributors: G.Breant 
 Tags: Tomahawk, shortcode, toma.hk, music, Spotify, Grooveshark, Soundcloud, Ex.fm
 Requires at least: 3.5
 Tested up to: 3.5.1
@@ -34,8 +34,7 @@ You can also specify several arguments :
  
 * width (the embed width) - default is 550
 * height (the embed height) - default is 430
-
-Like this : [twk-album width="550" height="430"]TOMAHK_ALBUM_URL[/twk-album] 
+* Like this : [twk-album width="550" height="430"]TOMAHK_ALBUM_URL[/twk-album] 
 
 = Embed a single track =
 
