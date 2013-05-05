@@ -41,9 +41,13 @@ class Soundcloudwall(Chart):
     def parse(self):
         default = 0
         self.setChartType("Track")
-        for year in range(2011, 2012+1):
-            max_monthrange = 12 if year is 2011 else 11
-            min_monthrange = 5 if year is 2011 else 1
+        # Starts from 2011 May
+        now = datetime.datetime.now()
+        thisYear = now.year
+        thisMonth = now.month
+        for year in range(2011, thisYear+1):
+            max_monthrange = 12 if year != thisYear else thisMonth
+            min_monthrange = 5 if year == 2011 else 1
 
             self.setChartName("%s %s" % (self.baseTitle, year))
             self.setIsDefault(default)
@@ -51,7 +55,7 @@ class Soundcloudwall(Chart):
             self.parseUrl()
 
             for month in range(min_monthrange,max_monthrange+1):
-                if( year == 2012 and month == max_monthrange):
+                if( year == thisYear and month == max_monthrange):
                     default = 1
                 self.setChartName("%s %s %s" % (self.baseTitle, calendar.month_name[month], year))
                 self.setIsDefault(default)
