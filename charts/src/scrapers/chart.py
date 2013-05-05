@@ -26,6 +26,8 @@ from scrapers.items import ChartItem, DetailItem, Detail, slugify
 class Chart(object):
     # This is backward compatible, Types must be singular
     __types = {'album' : 'Album','track' : 'Track','artist' : 'Artist'}
+    __outputMsgError = "Empty chart, not storing:"
+    __outputMsgOk = "Saving chart:"
     def __init__(self):
         try:
             self.prettyName
@@ -166,9 +168,18 @@ class Chart(object):
         content = response.decode('utf-8')
         return json.loads(content)
 
+    def __message(self, ok = False):
+        print "%s %s - %s (%s) : %s" % ((self.__outputMsgOk if ok else self.__outputMsgError), 
+                                        self.source_id, self.chart_type, slugify(self.chart_id), 
+                                        self.display_name)
+    def __checkOk(self, chart_list):
+        return False if not chart_list else True
+        
     def storeChartItem(self, chart_list):
-        print "Saving chart: %s - %s (%s) : %s" % (self.source_id, self.chart_type, slugify(self.chart_id), self.display_name)
-        self.chart_list = chart_list;
-        chart = self.__createChartItem()
-        self.__updateCache(self.__createMetadata(chart), chart)
+        validList = self.__checkOk(chart_list)
+        self.__message(validList)
+        if(validList):
+            self.chart_list = chart_list;
+            chart = self.__createChartItem()
+            self.__updateCache(self.__createMetadata(chart), chart)
 
