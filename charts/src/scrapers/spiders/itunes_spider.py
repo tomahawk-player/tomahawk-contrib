@@ -195,6 +195,7 @@ class ItunesSpider(BaseSpider):
         chart['geo'] = geo.lower()
         chart['name'] = genre_name
         chart['extra'] = feed_extra
+        chart["newrls"] = True
         chart['type'] = feed_type
         chart['list'] = chart_list
         chart['source'] = 'itunes'

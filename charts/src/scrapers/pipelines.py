@@ -27,7 +27,7 @@ class ScrapersPipeline(object):
         # This is a little hack, for now, we only get new releases from Itunes
         # and its identified by extra field
         try :
-            if source == "itunes" and item['extra'] :
+            if item["newrls"] and item["newrls"] is True:
                 self.storage = chartCache.newreleases
             else : self.storage = chartCache.storage
         except :

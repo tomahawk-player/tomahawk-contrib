@@ -96,6 +96,7 @@ class ChartItem(Item):
     expires = Field()
     maxage = Field()
     extra = Field()
+    newrls = Field()
 
 class ScrapersItem(ChartItem):
     pass
