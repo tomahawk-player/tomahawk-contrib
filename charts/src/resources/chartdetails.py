@@ -25,7 +25,7 @@ class ChartDetails():
     # A list of backward compatible sources, that means no NEW sources with Geo/Extra/Genre
     __generic_sources = ['itunes', 'billboard', 'rdio', 'ex.fm', 'soundcloudwall', 'we are hunted']
     # A list of new sources, that is not compatible with < 0.6.99.
-    __generic_non_compatible_sources = ['hotnewhiphop', 'djshop.de']
+    __generic_non_compatible_sources = ['metacritic', 'hotnewhiphop', 'djshop.de']
 
     def __init__(self):
         # Build sources

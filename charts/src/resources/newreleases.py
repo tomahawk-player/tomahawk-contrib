@@ -37,7 +37,7 @@ import urllib
 from pkg_resources import parse_version
 ## Routes and Handlers ##
 newreleases = Blueprint('newreleases', __name__)
-generic_sources = ['rovi', "itunes"]
+generic_sources = ['rovi', "itunes", "metacritic"]
 
 # pre 0.5.99 rovi is the only available source
 # Check version from tomakawk, itunes didnt make it pre 0.5.99
