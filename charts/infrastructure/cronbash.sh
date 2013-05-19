@@ -51,6 +51,8 @@ case "$1" in
 ;;
   "billboard") cd $SCRAPER_PATH && scrapy crawl billboard.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
+  "metacritic") cd $SCRAPER_PATH && scrapy crawl metacritic.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
+;;
   "hnhh") cd $SCRAPER_PATH && scrapy crawl hotnewhiphop.com --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
 ;;
   "djshop") cd $SCRAPER_PATH && scrapy crawl djshop.de --set FEED_FORMAT=json --loglevel=$LOG_LEVEL &> $LOG_PATH/$1.$(date +\%Y\%m\%d).log
