@@ -1,4 +1,4 @@
-=== Tomahk Shortcodes ===
+=== Toma.hk Shortcodes ===
 Contributors: grosbouff
 Tags: Tomahawk, shortcode, toma.hk, music, Spotify, Grooveshark, Soundcloud, Ex.fm
 Requires at least: 3.5
@@ -9,7 +9,7 @@ Use shortcodes to embed playlists, albums and single tracks from toma.hk.
 
 == Description ==
 
-Tomahk shortcodes allows you to embed playlists, albums and single tracks from toma.hk.
+Toma.hk shortcodes allows you to embed playlists, albums and single tracks from toma.hk.
 
 = Embed a playlist =
 
@@ -34,8 +34,7 @@ You can also specify several arguments :
  
 * width (the embed width) - default is 550
 * height (the embed height) - default is 430
-
-Like this : [twk-album width="550" height="430"]TOMAHK_ALBUM_URL[/twk-album] 
+* Like this : [twk-album width="550" height="430"]TOMAHK_ALBUM_URL[/twk-album] 
 
 = Embed a single track =
 

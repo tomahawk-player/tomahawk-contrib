@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: Tomahk shortcodes
+Plugin Name: Toma.hk shortcodes
 Description: Use shortcodes to embed playlists, albums and single tracks from toma.hk.
-Version: 0.1
+Version: 0.1.1
 Author: G.Breant
 Author URI: http://pencil2d.org
 Plugin URI: http://wordpress.org/extend/plugins/tomahk-shortcodes
@@ -66,7 +66,7 @@ class tomahk_shortcodes {
 
 	}
 
-        function shortcode_playlist( $args , $item_url = null) {
+        function shortcode_playlist( $args, $item_url = null) {
 
             // Attributes
             extract( shortcode_atts(
@@ -78,51 +78,27 @@ class tomahk_shortcodes {
             return $item->render();
         }
         
-        function shortcode_track( $args , $item_args = null) {
+        function shortcode_track( $args, $item_url = null) {
 
             // Attributes
             extract( shortcode_atts(
                     array(
                     ), $args )
             );
-            
-            //Artist
-            if($args['artist']){
-                $item_args['artist']=$args['artist'];
-                unset($args['artist']);
-            }
-            
-            //Title
-            if($args['title']){
-                $item_args['title']=$args['title'];
-                unset($args['title']);
-            }
-            
-            $item = new tomahk_Track($item_args, $args);
+  
+            $item = new tomahk_Track($item_url, $args);
             return $item->render();
         }
         
-        function shortcode_album( $args , $item_args = null) {
+        function shortcode_album( $args, $item_url = null) {
 
             // Attributes
             extract( shortcode_atts(
                     array(
                     ), $args )
             );
-            
-            //Artist
-            if($args['artist']){
-                $item_args['artist']=$args['artist'];
-                unset($args['artist']);
-            }
-            
-            //Title
-            if($args['title']){
-                $item_args['title']=$args['title'];
-                unset($args['title']);
-            }
 
-            $item = new tomahk_Album($item_args, $args);
+            $item = new tomahk_Album($item_url, $args);
             return $item->render();
         }
 
@@ -157,34 +133,44 @@ class tomahk_Playlist {
     var $width;
     var $height;
     
-    function __construct($playlist_url,$style_args=false){
+    function __construct($item_url,$args=false){
+	
+		$style_args=array();
+		$item_args=array();
         
-        if (!$playlist_url) return false;
-        
+        if (!$item_url) return false;
+
         //STYLE
         $style_default_args = array(
             'width'=>550, 
             'height'=>430,
         );
-        
-        $style_args = wp_parse_args($style_args,$style_default_args);
-        
-        foreach($style_default_args as $key=>$arg){
-            $this->$key = $style_args[$key];
-        }
-        
-        //PLAYLIST
-        $playlist_default_args=array(
+		
+        //ITEM
+        $item_default_args=array(
             'tomahk_id'=>null
         );
-        
-        $playlist_args = $this->extract_url_info($playlist_url);
-        
-        $playlist_args = wp_parse_args($playlist_args,$playlist_default_args);
+		
+		if ((isset($args['width']))&&(!is_numeric($args['width']))) unset($args['width']);
+		if ((isset($args['height']))&&(!is_numeric($args['height']))) unset($args['height']);
 
-        foreach($playlist_args as $key=>$arg){
-            $this->$key = $arg;
+		//populate style
+        $style_args = wp_parse_args($args,$style_default_args);
+        foreach($style_default_args as $key=>$arg){
+            $this->$key = $style_args[$key];
+        }     
+
+        $item_args = $this->extract_url_info($item_url);
+		
+		
+		
+		//populate item
+		$item_args = wp_parse_args($item_args,$item_default_args);
+
+        foreach($item_default_args as $key=>$arg){
+            $this->$key = $item_args[$key];
         }
+
     }
     
     function extract_url_info($url){
@@ -227,7 +213,10 @@ class tomahk_Track {
     var $width;
     var $height;
     
-    function __construct($track_args=false,$style_args=false){
+    function __construct($item_url=false,$args=false){
+	
+		$item_args = array();
+		$style_args = array();
 
         //style args
         $style_default_args = array(
@@ -236,29 +225,54 @@ class tomahk_Track {
             'autoplay'=>false,
             'disabled_resolvers'=>null
         );
-        //track args
-        $track_default_args = array(
+        //item args
+        $item_default_args = array(
             'tomahk_id'=>false,
             'artist'=>false,
             'title'=>false
         );
-        
-        $style_args = wp_parse_args($style_args,(array)$style_default_args);
-        
+		
+
+		
+		//STYLE
+		
+		//validate numbers
+		if ((isset($args['width']))&&(!is_numeric($args['width']))) unset($args['width']);
+		if ((isset($args['height']))&&(!is_numeric($args['height']))) unset($args['height']);
+
+		//Clean style array (remove entries that should be in item array)
+		foreach ($item_default_args as $slug=>$default_value){
+			if (isset($args[$slug])){
+				$item_args[$slug]=$args[$slug];
+				unset($args[$slug]);
+			}
+		}
+
+		//populate style vars
+        $style_args = wp_parse_args($args,(array)$style_default_args);
         foreach($style_default_args as $key=>$arg){
             $this->$key = $style_args[$key];
         }
+		
+		//ITEM
         
         //check for a toma.hk url
-        if ((isset($track_args))&&(is_string($track_args))){
-            $track_args = $this->extract_url_info($track_args);
+        if ((isset($item_url))&&(is_string($item_url))){
+            $url_args = $this->extract_url_info($item_url);
+			if ($url_args){
+				$item_args = array_merge($url_args,$item_args);
+			}
         }
-        
-        $track_args = wp_parse_args((array)$track_args,$track_default_args);
 
-        foreach($track_default_args as $key=>$arg){
-            $this->$key = $track_args[$key];
+        $item_args = wp_parse_args($item_args,$item_default_args);
+
+		//populate item vars
+        foreach($item_default_args as $key=>$arg){
+            $this->$key = $item_args[$key];
         }
+		
+
+
     }
     
     function extract_url_info($url){
@@ -312,7 +326,10 @@ class tomahk_Album {
     var $width;
     var $height;
     
-    function __construct($album_args=false,$style_args=false){
+    function __construct($item_url=false,$args=false){
+	
+		$item_args = array();
+		$style_args = array();
 
         //style args
         $style_default_args = array(
@@ -322,27 +339,45 @@ class tomahk_Album {
             'title'=>null
         );
         
-        //album args
-        $album_default_args = array(
+        //item args
+        $item_default_args = array(
             'artist'=>false,
             'title'=>false
         );
-        
-        $style_args = wp_parse_args($style_args,$style_default_args);
+		
+		//STYLE
+		//validate numbers
+		if ((isset($args['width']))&&(!is_numeric($args['width']))) unset($args['width']);
+		if ((isset($args['height']))&&(!is_numeric($args['height']))) unset($args['height']);
+		
+		//Clean style array (move entries that should be in item array)
+		foreach ($item_default_args as $slug=>$default_value){
+			if (isset($args[$slug])){
+				$item_args[$slug]=$args[$slug];
+				unset($args[$slug]);
+			}
+		}
 
-        foreach($style_default_args as $key=>$arg){
+		//populate style
+        $style_args = wp_parse_args($args,$style_default_args);
+        foreach($style_args as $key=>$arg){
             $this->$key = $style_args[$key];
         }
-
+		
+		//ITEM
         //check for a toma.hk url
-        if (isset($album_args)&&is_string($album_args)){
-            $album_args = $this->extract_url_info($album_args);
+        if (isset($item_url)&&is_string($item_url)){
+            $url_args = $this->extract_url_info($item_url);
+			if($url_args){
+				$item_args=array_merge($url_args,$item_args);
+			}
         }
-        
-        $album_args = wp_parse_args($album_args,$album_default_args);
+	
+		//populate item
+        $item_args = wp_parse_args($item_args,$item_default_args);
 
-        foreach($album_default_args as $key=>$arg){
-            $this->$key = $album_args[$key];
+        foreach($item_default_args as $key=>$arg){
+            $this->$key = $item_args[$key];
         }
 
     }
