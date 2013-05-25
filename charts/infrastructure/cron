@@ -11,5 +11,6 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
 0            1         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh wah
 0            2         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh rdio
 0            3         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh exfm
+0            3         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh thisismyjam
 0            3         *               *                 *           cd /home/charts/tomahawk-contrib/charts/infrastructure && ./cronbash.sh rovi
 
