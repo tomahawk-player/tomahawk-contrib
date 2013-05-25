@@ -10,6 +10,7 @@ Current Apis:
 * Rovi (New releases)
 * Soundcloudwall
 * Ex.fm
+* ThisIsMyJam
 
 If you feel there's charts missing here, you can write your own:
 

@@ -16,6 +16,7 @@ Current Apis:
 * Soundcloudwall
 * Rovi
 * Ex.fm
+* ThisIsMyJam
 
 Upcoming Spiders:
 
