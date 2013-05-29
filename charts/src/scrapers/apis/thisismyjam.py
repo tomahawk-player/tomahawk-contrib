@@ -28,6 +28,7 @@ from scrapers.items import slugify
 class Thisismyjam(Chart):
     source_id = "thisismyjam"
     name = "ThisIsMyJam"
+    prettyName = "ThisIsMyJam"
     description = "A place to put your favorite song of the moment & hear great music, handpicked every day by friends."
     have_extra = False
     baseUrl = "http://api.thisismyjam.com/1"
