@@ -139,7 +139,11 @@ class MetacriticSpider(CrawlSpider):
                 artistName = item.select(self.coming_soon_artist_xpath+"/text()").extract()[0].strip();
                 if not artistName:
                     artistName = item.select(self.coming_soon_artist_xpath+"/a/text()").extract()[0].strip();
-                chart_item = SingleAlbumItem(rank=str(rank+currentSize), artist=artistName, album=item.select(self.coming_soon_album_xpath).extract()[0].strip());
+                chart_item = SingleAlbumItem(
+                    rank=str(rank+currentSize), 
+                    artist=artistName, 
+                    album=item.select(self.coming_soon_album_xpath).extract()[0].strip()
+                );
                 chart_list.append(dict(chart_item))
             except Exception, e:
                 continue;
@@ -149,7 +153,12 @@ class MetacriticSpider(CrawlSpider):
         chart_list = [];
         currentSize = len(chart["list"])+1
         for rank, item in enumerate(hxs.select(self.list_xpath)):
-            chart_item = SingleAlbumItem(rank=str(rank+currentSize), artist=item.select('.//span/text()').extract()[3].strip(), album=item.select('.//a/text()').extract()[0].strip());
+            print item.select('.//span/text()').extract()[1]
+            chart_item = SingleAlbumItem(
+                rank=str(rank+currentSize), 
+                artist=item.select('.//span/text()').extract()[1].strip(), 
+                album=item.select('.//a/text()').extract()[0].strip()
+            );
             chart_list.append(dict(chart_item))
         chart["list"] += chart_list;
 
