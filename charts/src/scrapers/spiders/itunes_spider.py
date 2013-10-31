@@ -23,7 +23,7 @@ import json
 import re
 import hashlib
 from urlparse import urlparse as urlparser
-
+from urllib2 import urlopen
 #
 #scrapy modules
 #
@@ -31,17 +31,21 @@ from scrapy.conf import settings
 from scrapy import log
 from scrapy.spider import BaseSpider
 from scrapers.items import SingleTrackItem, SingleAlbumItem, DetailItem, Detail, ChartItem
-
 from sources.utils import cache as chartCache
 
-generator_url = 'http://itunes.apple.com/rss/generator/'
+from countrycode import countrycode
+
+generator_url = 'https://rss.itunes.apple.com/us/'
 available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/wsAvailableFeeds?cc=%s'
 
-@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
+#@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
 def get_countries():
-    doc = lxml.html.parse(generator_url)
-    countries = [c.attrib['value'] for c in doc.xpath("//select[@id='feedCountry']/option")]
-    return countries
+    # generator_url is now loaded dynamically. This is a quick fix...
+    doc = lxml.html.parse("itunes_feed_gen.html")
+    e = doc.xpath('.//div[@class="app-controls"]')[0]
+    countries = [c.text.encode('utf-8') for c in e.xpath(".//select/option")]
+    # Convert country long name to iso2c
+    return countrycode(codes=countries, origin='country_name', target='iso2c')
 
 def get_genre(_id):
     return chartCache.storage['itunesgenre_'+_id]
@@ -49,14 +53,21 @@ def get_genre(_id):
 def set_genre(_id, name):
     chartCache.storage['itunesgenre_'+_id] = name
 
-#@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
+@chartCache.methodcache.cache('get_music_feeds', expire=settings['ITUNES_EXPIRE'])
 def get_music_feeds(countries):
     # { name: country, charts: [], genres: [] }
     music_data = []
     for cc in countries:
+
         url = available_url % (cc)
-        data = urllib2.urlopen(url).read()
-        
+
+        log.msg("Getting music feeds for country: %s" % (cc), loglevel=log.INFO)
+        try:            
+            data = urllib2.urlopen(url).read()
+        except Exception,e:
+            log.msg("Failed to get feeds for country: %s" % (cc), loglevel=log.WARNING)
+            continue;
+
         # the response has a jsonp callback, lets remove that
         data = data.replace("availableFeeds=", "")
         j = json.loads(data)
@@ -107,7 +118,9 @@ def get_feed_urls(limit):
 class ItunesSpider(BaseSpider):
     name = 'itunes.com'
     allowed_domains = ['itunes.com']
+
     start_urls = get_feed_urls(settings['ITUNES_LIMIT'])
+
 
     source_id = "itunes"
     source_name = "iTunes"
