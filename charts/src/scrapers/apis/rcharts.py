@@ -39,7 +39,7 @@ class Rcharts(Chart):
 
     def parse(self):
         for section in self.sections:
-            response = self.getJsonContent('{baseUrl}/{section}.json'.format(baseUrl=self.baseUrl, section=section))
+            response = self.getJsonContent('{baseUrl}/r/{section}.json'.format(baseUrl=self.baseUrl, section=section))
 
             self.setChartOrigin(self.baseUrl)
             self.setChartName(section.capitalize())
@@ -47,7 +47,7 @@ class Rcharts(Chart):
             self.setChartId(slugify(self.chart_name))
 
             result_list = []
-            for rank, item in enumerate(response[u'jams']):
+            for rank, item in enumerate(response[u'tracks']):
                 chart_item = {
                         'rank' : rank,
                         'artist' : item['artist'],
