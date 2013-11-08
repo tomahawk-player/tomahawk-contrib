@@ -12,6 +12,7 @@ Current Spiders:
 
 Current Apis:
 * Rdio.com
+* Reddit.com
 * WeAreHunted
 * Soundcloudwall
 * Rovi
