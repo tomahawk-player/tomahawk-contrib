@@ -6,11 +6,15 @@ Sometimes we dont need to scrape HTML for chart sources. If there's an available
 Current Apis:
 
 * Rdio
-* We Are Hunted
 * Rovi (New releases)
 * Soundcloudwall
 * Ex.fm
 * ThisIsMyJam
+
+Disabled:
+
+* We Are Hunted
+
 
 If you feel there's charts missing here, you can write your own:
 
