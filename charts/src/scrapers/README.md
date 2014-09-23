@@ -13,9 +13,7 @@ Current Spiders:
 Current Apis:
 * Rdio.com
 * Reddit.com
-* Soundcloudwall
 * Rovi
-* Ex.fm
 * ThisIsMyJam
 
 Upcoming Spiders:
@@ -25,6 +23,8 @@ Upcoming Spiders:
 Disabled:
 
 * WeAreHunted
+* Ex.fm
+* SoundcloudWall
 
 
 Get Going for Spiders
