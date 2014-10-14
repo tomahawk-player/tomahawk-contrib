@@ -25,6 +25,7 @@ Disabled:
 * WeAreHunted
 * Ex.fm
 * SoundcloudWall
+* rCharts
 
 
 Get Going for Spiders
