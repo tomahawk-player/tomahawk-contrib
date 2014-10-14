@@ -247,7 +247,10 @@ class ItunesSpider(BaseSpider):
                 album = title
                 item = SingleAlbumItem()
             elif _type == "Track":
-                album = entry.xpath('im:collection/im:name', namespaces=ns)[0].text
+                album = None
+                collectionNames = entry.xpath('im:collection/im:name', namespaces=ns)
+                if len(collectionNames) > 0:
+                    album = collectionNames[0].text
                 item = SingleTrackItem()
                 item['track'] = title
             
