@@ -35,7 +35,12 @@ WORKDIR /vlc-2.2/contrib/win32
 # Temporarily deactivated (we want to use them in the future):
 # * projectM
 # * glew
-RUN ../bootstrap --host=i686-w64-mingw32 --disable-gnutls --disable-taglib --disable-bluray --disable-cddb --disable-regex --disable-ssh2 --disable-gcrypt --disable-gpg-error --disable-vncserver --disable-dvdnav --disable-dvdread --disable-qt --disable-glew --disable-projectM
+# Activated but should be deactivated:
+# * gcrypt (used also in jreen)
+# * gpg-error (used also in jreen)
+# * taglib (used directly in tomahawk)
+# * gnutls (used directly in tomahawk)
+RUN ../bootstrap --host=i686-w64-mingw32 --disable-bluray --disable-cddb --disable-regex --disable-ssh2 --disable-vncserver --disable-dvdnav --disable-dvdread --disable-qt --disable-glew --disable-projectM
 RUN make
 
 WORKDIR /vlc-2.2
@@ -44,6 +49,8 @@ RUN ./bootstrap
 RUN mkdir /vlc-2.2/win32
 WORKDIR /vlc-2.2/win32
 # Install dependencies that we also use in Tomahawk
-RUN zypper install -y mingw32-gnutls mingw32-taglib
-# RUN ../configure --host=i686-w64-mingw32 --disable-lua
-# #RUN ../configure --enable-update-check --enable-lua --enable-faad --enable-flac --enable-theora --enable-twolame --enable-quicktime --enable-avcodec --enable-merge-ffmpeg --enable-dca --enable-mpc --disable-libass --enable-x264 --enable-schroedinger --enable-realrtsp --enable-live555 --disable-dvdread --enable-shout --enable-goom --disable-caca --disable-sdl --disable-qt --disable-skins2 --enable-sse --enable-mmx --disable-libcddb --enable-zvbi --disable-telx --disable-freetype --host=i686-w64-mingw32
+# TODO
+# FIXME: vpx currently disabled as it is not building, reenable for youtube support
+RUN ../configure --host=i686-w64-mingw32 --disable-lua --disable-vpx
+RUN make
+RUN make install
