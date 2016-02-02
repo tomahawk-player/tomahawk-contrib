@@ -70,6 +70,10 @@ If you have problems installing libxml
 
 	sudo apt-get install libxml2-dev libxslt-dev
 
+If you have problems installing the cryptography module
+
+        sudo apt-get install zlib1g-dev libffi-dev libssl-dev
+
 And then the requirements    
 
 	pip install -U -r requirements.txt
