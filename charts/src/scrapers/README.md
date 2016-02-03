@@ -26,7 +26,7 @@ Disabled:
 * Ex.fm
 * SoundcloudWall
 * rCharts
-
+* Rdio
 
 Get Going for Spiders
 ---------

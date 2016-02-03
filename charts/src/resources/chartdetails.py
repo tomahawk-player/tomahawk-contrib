@@ -23,7 +23,7 @@ class ChartDetails():
     __bcVersion = '0.6.99'
     __baseImageUrl = 'http://hatchet.is/images/'
     # A list of backward compatible sources, that means no NEW sources with Geo/Extra/Genre
-    __generic_sources = ['itunes', 'billboard', 'rdio', 'thisismyjam']
+    __generic_sources = ['itunes', 'billboard', 'thisismyjam']
     # A list of new sources, that is not compatible with < 0.6.99.
     __generic_non_compatible_sources = ['metacritic', 'hotnewhiphop', 'djshop.de']
 
