@@ -10,7 +10,7 @@ import os
 try:
     BASEDIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    BASEDIR = '/home/charts/cache'
+    BASEDIR = '/home/ubuntu/cache'
 
 SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'

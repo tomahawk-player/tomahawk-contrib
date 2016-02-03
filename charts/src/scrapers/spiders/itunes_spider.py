@@ -41,7 +41,7 @@ available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/w
 #@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
 def get_countries():
     # generator_url is now loaded dynamically. This is a quick fix...
-    doc = lxml.html.parse("itunes_feed_gen.html")
+    doc = lxml.html.parse("/home/ubuntu/tomahawk-contrib/charts/src/scrapers/spiders/itunes_feed_gen.html")
     e = doc.xpath('.//div[@class="app-controls"]')[0]
     countries = [c.text.encode('utf-8') for c in e.xpath(".//select/option")]
     # Convert country long name to iso2c

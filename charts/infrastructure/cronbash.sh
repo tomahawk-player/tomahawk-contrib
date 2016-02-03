@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #Change to path, ey?
-SCRAPER_PATH=${SCRAPER_PATH:="/home/charts/tomahawk-contrib/charts/src/scrapers"}
+SCRAPER_PATH=${SCRAPER_PATH:="/home/ubuntu/tomahawk-contrib/charts/src/scrapers"}
 LOG_LEVEL=${LOG_LEVEL:="CRITICAL"}
 
 API_SCRAPER_PATH=$SCRAPER_PATH/apis
