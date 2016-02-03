@@ -39,8 +39,8 @@ from twisted.python import log
 from twisted.python.logfile import DailyLogFile
 
 DEBUG = True
-app = Flask(__name__)
-app.config.from_object(__name__)
+application = Flask(__name__)
+application.config.from_object(__name__)
 
 # custom url converter
 class RegexConverter(BaseConverter):
@@ -48,16 +48,16 @@ class RegexConverter(BaseConverter):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
 
-app.url_map.converters['regex'] = RegexConverter
+application.url_map.converters['regex'] = RegexConverter
 
-app.register_blueprint(charts)
-app.register_blueprint(newreleases)
+application.register_blueprint(charts)
+application.register_blueprint(newreleases)
 
 if __name__ == '__main__':
     if DEBUG :
         log.startLogging(sys.stdout)
         log.startLogging(DailyLogFile.fromFullPath("logs/charts-twisted.log"))
     # Start the service
-    resource = WSGIResource(reactor, reactor.getThreadPool(), app)
+    resource = WSGIResource(reactor, reactor.getThreadPool(), application)
     reactor.listenTCP(8080, Site(resource), interface="127.0.0.1")
     reactor.run()
