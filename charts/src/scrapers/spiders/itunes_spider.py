@@ -23,7 +23,7 @@ import json
 import re
 import hashlib
 from urlparse import urlparse as urlparser
-from urllib2 import urlopen
+from os import path
 #
 #scrapy modules
 #
@@ -40,8 +40,9 @@ available_url = 'http://itunes.apple.com/WebObjects/MZStoreServices.woa/wa/RSS/w
 
 #@chartCache.methodcache.cache('get_countries', expire=settings['ITUNES_EXPIRE'])
 def get_countries():
+    html_path = path.join(path.dirname(__file__), "itunes_feed_gen.html")
     # generator_url is now loaded dynamically. This is a quick fix...
-    doc = lxml.html.parse("itunes_feed_gen.html")
+    doc = lxml.html.parse(html_path)
     e = doc.xpath('.//div[@class="app-controls"]')[0]
     countries = [c.text.encode('utf-8') for c in e.xpath(".//select/option")]
     # Convert country long name to iso2c

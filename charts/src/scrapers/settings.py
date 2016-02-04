@@ -10,7 +10,7 @@ import os
 try:
     BASEDIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    BASEDIR = '/home/charts/cache'
+    BASEDIR = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')), 'cache')
 
 SPIDER_MODULES = ['scrapers.spiders']
 NEWSPIDER_MODULE = 'scrapers.spiders'
