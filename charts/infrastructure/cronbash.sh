@@ -16,8 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+pushd `dirname "$0"` > /dev/null
+cd ..
+ROOTPATH=`pwd -P`
+popd > /dev/null
 #Change to path, ey?
-SCRAPER_PATH=${SCRAPER_PATH:="/home/charts/tomahawk-contrib/charts/src/scrapers"}
+SCRAPER_PATH=${SCRAPER_PATH:="$ROOTPATH/src/scrapers"}
 LOG_LEVEL=${LOG_LEVEL:="CRITICAL"}
 
 API_SCRAPER_PATH=$SCRAPER_PATH/apis

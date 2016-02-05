@@ -24,7 +24,6 @@ Contains information regarding caching behavior
 from datetime import datetime, timedelta
 import dateutil.relativedelta as reldate
 from beaker.cache import CacheManager
-from scrapers.items import DetailItem
 from beaker.util import parse_cache_config_options
 import shove
 import os
@@ -32,17 +31,18 @@ import os
 try:
     OUTPUT_DIR = os.environ['OUTPUT_DIR']
 except KeyError:
-    OUTPUT_DIR = '/home/charts/cache'
+    OUTPUT_DIR = os.path.join(os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', '..', '..')), 'cache')
 
-HTTP_CACHE_DIR = OUTPUT_DIR + '/http'
+HTTP_CACHE_DIR = os.path.join(OUTPUT_DIR, 'http')
 MAX_THREADS=5
 TTL=3600
 
 
 cache_opts = {
     'cache.type': 'file',
-    'cache.data_dir': OUTPUT_DIR+'/cache/data',
-    'cache.lock_dir': OUTPUT_DIR+'/cache/lock'
+    'cache.data_dir': os.path.join(OUTPUT_DIR, 'cache', 'data'),
+    'cache.lock_dir': os.path.join(OUTPUT_DIR, 'cache', 'lock'),
 }
 
 methodcache = CacheManager(**parse_cache_config_options(cache_opts))
